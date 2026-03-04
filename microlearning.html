@@ -514,28 +514,24 @@ const TTS_TEXTS = {
 };
 
 // Pre-cache all TTS audio on page load
-async function preCacheTTS() {
-  for (const key of Object.keys(TTS_TEXTS)) {
-    try {
-      const res = await fetch(SARVAM_TTS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
-        body: JSON.stringify({
-          inputs: [TTS_TEXTS[key]],
-          target_language_code: 'hi-IN',
-          speaker: 'priya',
-          model: 'bulbul:v3',
-          enable_preprocessing: true,
-          pace: 1.2
-        })
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data.audios && data.audios[0]) ttsCache[TTS_TEXTS[key]] = data.audios[0];
-    } catch (e) { /* ignore pre-cache errors */ }
-  }
+function preCacheOne(text) {
+  return fetch(SARVAM_TTS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
+    body: JSON.stringify({
+      inputs: [text],
+      target_language_code: 'hi-IN',
+      speaker: 'priya',
+      model: 'bulbul:v3',
+      enable_preprocessing: true,
+      pace: 1.2
+    })
+  }).then(r => r.ok ? r.json() : null)
+    .then(data => { if (data && data.audios && data.audios[0]) ttsCache[text] = data.audios[0]; })
+    .catch(() => {});
 }
-preCacheTTS();
+// Fire all TTS pre-cache calls in parallel on page load
+Promise.all(Object.values(TTS_TEXTS).map(preCacheOne));
 
 async function speakHindi(text) {
   stopTTS();
@@ -871,7 +867,7 @@ function renderCarousel() {
             <h4>${ICONS.wand} Guided Creation</h4>
             <div class="create-sub">Apna idea frame karo. Ek bold version try karo.</div>
             <div class="create-label">Subject (Kaun/Kya?)</div>
-            <input class="create-input" id="createSubject" type="text" placeholder="e.g. Stressed chef in kitchen" oninput="updateCreateBtn()" />
+            <input class="create-input" id="createSubject" type="text" value="Stressed chef in kitchen" oninput="updateCreateBtn()" />
             <div class="create-row">
               <div>
                 <div class="create-label">Emotion</div>
@@ -891,8 +887,8 @@ function renderCarousel() {
               </div>
             </div>
             <div class="create-label">Overlay Text (Hook)</div>
-            <input class="create-input" id="createText" type="text" placeholder="e.g. SECRET REVEALED!" />
-            <button class="create-btn" id="createGenBtn" disabled onclick="generateInCarousel()">
+            <input class="create-input" id="createText" type="text" value="SECRET REVEALED!" />
+            <button class="create-btn" id="createGenBtn" onclick="generateInCarousel()">
               ${ICONS.wand} Generate Karo
             </button>
           </div>
