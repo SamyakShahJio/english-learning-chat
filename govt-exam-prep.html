@@ -1056,9 +1056,9 @@ function updateFlashcardView(index) {
       <div class="card-nav-dots">
         ${FLASHCARDS.map((_, i) => `<div class="card-nav-dot ${i === index ? 'active' : ''} ${flashcardState.flipped[i] ? 'viewed' : ''}"></div>`).join('')}
       </div>
-      ${allViewed ?
-        `<button class="card-nav-btn" style="width:auto;padding:0 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--primary);color:var(--white);border-color:var(--primary);" onclick="finishFlashcards()">Done</button>` :
-        `<button class="card-nav-btn ${index === FLASHCARDS.length - 1 ? 'disabled' : ''}" onclick="updateFlashcardView(${index + 1})">${ICONS.chevRight}</button>`
+      ${index === FLASHCARDS.length - 1 ?
+        `<button class="card-nav-btn" style="width:auto;padding:0 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--primary);color:var(--white);border-color:var(--primary);" onclick="finishFlashcards()">End</button>` :
+        `<button class="card-nav-btn" onclick="updateFlashcardView(${index + 1})">${ICONS.chevRight}</button>`
       }
     </div>`;
   scrollDown();
