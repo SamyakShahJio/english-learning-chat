@@ -349,51 +349,72 @@ const ICONS = {
   star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
 };
 
-// === Text-to-Speech Engine (Sarvam AI Bulbul v3) ===
+// === Text-to-Speech Engine (Sarvam AI — AudioContext unlock pattern) ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 let ttsAudio = null;
-let ttsCache = {}; // cache base64 audio to avoid repeat calls
+let ttsCache = {};
+let playbackCtx = null;
+let lastTtsBase64 = null;
+
+function unlockAudio() {
+  if (playbackCtx) return;
+  try {
+    playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+    playbackCtx.resume();
+  } catch(e) { console.warn('AudioContext:', e); }
+}
+function base64ToArrayBuffer(b64) {
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+function playTtsViaContext(base64) {
+  if (!playbackCtx || !base64) return;
+  try {
+    playbackCtx.resume();
+    playbackCtx.decodeAudioData(base64ToArrayBuffer(base64)).then(buf => {
+      const src = playbackCtx.createBufferSource();
+      src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
+    }).catch(e => console.error('decodeAudioData:', e));
+  } catch(e) { console.error('playTtsViaContext:', e); }
+}
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 async function speakHindi(text) {
   stopTTS();
-
-  // Check cache first
   if (ttsCache[text]) {
-    playBase64Audio(ttsCache[text]);
+    lastTtsBase64 = ttsCache[text];
+    if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
+    else { playBase64Audio(lastTtsBase64); }
     return;
   }
-
   try {
     const res = await fetch(SARVAM_TTS_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-subscription-key': SARVAM_API_KEY
-      },
+      headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
       body: JSON.stringify({
         inputs: [text],
         target_language_code: 'hi-IN',
-        speaker: 'shubh',
-        model: 'bulbul:v3',
+        speaker: 'anushka',
+        model: 'bulbul:v2',
         enable_preprocessing: true
       })
     });
-
     if (!res.ok) throw new Error('Sarvam API error: ' + res.status);
-
     const data = await res.json();
     const b64 = data.audios && data.audios[0];
     if (b64) {
       ttsCache[text] = b64;
-      playBase64Audio(b64);
+      lastTtsBase64 = b64;
+      if (playbackCtx) { playTtsViaContext(b64); }
+      else { playBase64Audio(b64); }
     }
   } catch (err) {
     console.warn('Sarvam TTS failed, falling back to browser TTS:', err);
-    // Fallback to browser speechSynthesis
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'hi-IN';
-    utter.rate = 0.85;
+    utter.lang = 'hi-IN'; utter.rate = 0.85;
     speechSynthesis.speak(utter);
   }
 }
@@ -463,33 +484,53 @@ function scrollToBottom() {
 function handleMicClick() { /* placeholder for input bar mic */ }
 function handleSend() { /* placeholder for input bar send */ }
 
-// === Interview Questions Data (3 questions) ===
+// === Interview Questions Data ===
 const questions = [
+  {
+    hindi: "Kya aapke paas valid driving license aur ek bharosemand two-wheeler hai?",
+    rubric: "Eligibility",
+    rubricHindi: "Yogyata",
+    number: 1
+  },
   {
     hindi: "Aap delivery ke liye pahunchte hain lekin lift kharab hai, 4th floor hai. Customer neeche aane se mana karta hai. Aap kya karenge?",
     rubric: "Problem Solving",
     rubricHindi: "Samajhdaari",
-    number: 1
+    number: 2
   },
   {
     hindi: "Bahut baarish ho rahi hai aur order 20 minute late hai. Customer phone pe chilla raha hai. Aap kya bolenge?",
     rubric: "Customer Handling",
     rubricHindi: "Customer Handling",
-    number: 2
+    number: 3
   },
   {
     hindi: "Customer kehta hai khana gir gaya hai aur Cash on Delivery ka paisa dene se mana kar raha hai. Aap kya karenge?",
     rubric: "Process & Escalation",
     rubricHindi: "Process Jaankaari",
-    number: 3
+    number: 4
+  },
+  {
+    hindi: "Map pe address nahi mil raha aur customer phone nahi utha raha. Standard process kya hai?",
+    rubric: "Navigation & SOP",
+    rubricHindi: "SOP Jaankaari",
+    number: 5
+  },
+  {
+    hindi: "Aap Swiggy mein delivery partner kyun banna chahte hain?",
+    rubric: "Motivation",
+    rubricHindi: "Motivation",
+    number: 6
   }
 ];
 
 // === Feedback Data ===
 const feedbackData = [
-  { q: "Q1: Lift Kharab", feedback: "Aapne bahut jaldi baat ki. Customer se ladna nahi chahiye.", status: "bad", better: "Main politely customer ko request karunga ki neeche aa jaayein. Agar nahi aaye toh khud 4th floor tak le jaaunga." },
-  { q: "Q2: Baarish mein Delay", feedback: "Achha tone tha. Aapne maafi maangi, yeh sahi hai.", status: "good", better: "Sir sorry for the delay, baarish ki wajah se thoda late ho gaya. Aapka order safe hai, bas 5 minute aur lagenge." },
-  { q: "Q3: Khana Gira / COD", feedback: "Aap ghabra gaye. Pehle support ko call karo.", status: "bad", better: "Main pehle photo leke proof rakhta, phir turant Partner Support ko call karke situation explain karta." }
+  { q: "Q1: License Check", feedback: "Saaf jawab diya. Achha hai.", status: "good", better: "Haan, mere paas valid driving license hai aur meri apni bike hai jo achhi condition mein hai." },
+  { q: "Q2: Lift Kharab", feedback: "Aapne bahut jaldi baat ki. Customer se ladna nahi chahiye.", status: "bad", better: "Main politely customer ko request karunga ki neeche aa jaayein. Agar nahi aaye toh khud 4th floor tak le jaaunga." },
+  { q: "Q3: Baarish mein Delay", feedback: "Achha tone tha. Aapne maafi maangi, yeh sahi hai.", status: "good", better: "Sir sorry for the delay, baarish ki wajah se thoda late ho gaya. Aapka order safe hai, bas 5 minute aur lagenge." },
+  { q: "Q4: Khana Gira / COD", feedback: "Aap ghabra gaye. Pehle support ko call karo.", status: "bad", better: "Main pehle photo leke proof rakhta, phir turant Partner Support ko call karke situation explain karta." },
+  { q: "Q5: Address Nahi Mila", feedback: "Sahi process bataya. 10 minute wait karna sahi hai.", status: "good", better: "Main 10 minute tak try karunga — call, SMS. Agar nahi mila toh support ko contact karunga." }
 ];
 
 // === State transitions ===
@@ -544,10 +585,14 @@ async function goToState(state) {
       showTyping();
       await wait(800);
       hideTyping();
-      await addMsg('ai', `Pehle samjho ki interviewer kya dekhta hai. Yeh 3 cheezein test hoti hain:`);
+      await addMsg('ai', `Pehle samjho ki interviewer kya dekhta hai. Yeh 4 cheezein test hoti hain:`);
       await addRaw(`<div class="expect-card">
         <h4>Game Plan</h4>
-        <div class="expect-sub">Interview mein yeh 3 cheezein test hongi:</div>
+        <div class="expect-sub">Interview mein yeh 4 cheezein test hongi:</div>
+        <div class="expect-item">
+          <div class="expect-icon" style="background:rgba(53,53,243,0.15);color:var(--primary)">${ICONS.briefcase}</div>
+          <div class="expect-item-text"><h5>Yogyata & Motivation</h5><p>License, gaadi, aur kyun karna hai?</p></div>
+        </div>
         <div class="expect-item">
           <div class="expect-icon" style="background:rgba(30,204,176,0.15);color:var(--sparkle)">${ICONS.brain}</div>
           <div class="expect-item-text"><h5>Problem Solving</h5><p>Mushkil situation mein kya karoge?</p></div>
@@ -562,12 +607,48 @@ async function goToState(state) {
         </div>
       </div>`, 300);
       await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('mic_check')">Samjha, aage badho</span>
+      </div>`, 200);
+      break;
+
+    case 'mic_check':
+      await addMsg('user', 'Samjha, aage badho');
+      showTyping();
+      await wait(600);
+      hideTyping();
+      await addMsg('ai', `Pehle mic check karte hain. Neeche wala button dabao aur yeh bolke dikhao:`);
+      await addRaw(`<div class="question-card" style="text-align:center;">
+        <div class="q-text" style="font-size:16px;">"Mera naam Deepak hai, aur main interview ke liye taiyaar hoon."</div>
+      </div>`, 200);
+      await addRaw(`<div class="mic-area">
+        <div class="mic-label">Mic test karo</div>
+        <button class="mic-btn-large" id="micCheckBtn" onclick="doMicCheck()">
+          ${ICONS.mic}
+        </button>
+        <div class="mic-label-muted">Tap karke bolo</div>
+      </div>`, 300);
+      break;
+
+    case 'mic_check_done':
+      await addRaw(`<div class="recorded-card">
+        ${ICONS.check}
+        <span>Mic sahi kaam kar raha hai!</span>
+      </div>`, 0);
+      await wait(600);
+      showTyping();
+      await wait(600);
+      hideTyping();
+      await addMsg('ai', `Bahut achha! Ab interview practice shuru karte hain. 6 sawaal hain. Har sawaal sunke, mic button dabake jawab do.`);
+      await addRaw(`<div class="chips">
         <span class="chip" onclick="startQuestions()">Shuru karo</span>
       </div>`, 200);
       break;
 
     case 'ask_question':
       const q = questions[questionIndex];
+      if (questionIndex === 0) {
+        await addMsg('user', 'Shuru karo');
+      }
       showTyping();
       await wait(800);
       hideTyping();
@@ -593,10 +674,10 @@ async function goToState(state) {
         <div class="q-hint">Testing: ${q.rubric}</div>
       </div>`, 200);
 
-      // Mic button to answer (unique ID per question to avoid DOM collision)
-      await addRaw(`<div class="mic-area" id="answerMicArea-${questionIndex}">
+      // Mic button to answer
+      await addRaw(`<div class="mic-area" id="answerMicArea">
         <div class="mic-label">Jawab dene ke liye mic dabao</div>
-        <button class="mic-btn-large" id="answerMicBtn-${questionIndex}" onclick="simulateRecording(${questionIndex})">
+        <button class="mic-btn-large" id="answerMicBtn" onclick="simulateRecording()">
           ${ICONS.mic}
         </button>
         <div class="mic-label-muted">Tap karke bolo</div>
@@ -604,6 +685,12 @@ async function goToState(state) {
       break;
 
     case 'question_answered':
+      // Show recorded confirmation
+      await addRaw(`<div class="recorded-card">
+        ${ICONS.check}
+        <span>Jawab record ho gaya</span>
+      </div>`, 0);
+
       if (questionIndex < questions.length - 1) {
         await addRaw(`<div class="chips">
           <span class="chip" onclick="nextQuestion()">Agla sawaal</span>
@@ -702,14 +789,48 @@ function selectDate(date) {
   addMsg('user', date).then(() => goToState('date_selected'));
 }
 
+function doMicCheck() {
+  const btn = document.getElementById('micCheckBtn');
+  if (!btn || btn.dataset.started) return;
+  btn.dataset.started = 'true'; // prevent double-tap
+  btn.classList.add('recording');
+  btn.innerHTML = `<div style="display:flex;gap:3px;align-items:center;height:20px;">
+    <div style="width:3px;background:white;border-radius:99px;animation:waveAnim 1s infinite;height:8px;"></div>
+    <div style="width:3px;background:white;border-radius:99px;animation:waveAnim 1.2s infinite;height:16px;"></div>
+    <div style="width:3px;background:white;border-radius:99px;animation:waveAnim 0.8s infinite;height:12px;"></div>
+  </div>`;
+  // Find and update label
+  const area = btn.closest('.mic-area');
+  if (area) {
+    const label = area.querySelector('.mic-label');
+    if (label) label.textContent = 'Sun raha hoon...';
+    const sub = area.querySelector('.mic-label-muted');
+    if (sub) sub.textContent = 'Bolte raho...';
+  }
+
+  setTimeout(() => {
+    btn.classList.remove('recording');
+    btn.innerHTML = ICONS.check;
+    btn.style.background = 'var(--success)';
+    btn.onclick = null;
+    if (area) {
+      const label = area.querySelector('.mic-label');
+      if (label) { label.textContent = 'Achha level hai!'; label.style.color = 'var(--success)'; }
+      const sub = area.querySelector('.mic-label-muted');
+      if (sub) sub.textContent = '';
+    }
+    setTimeout(() => goToState('mic_check_done'), 800);
+  }, 2500);
+}
+
 function startQuestions() {
   disableChips();
   questionIndex = 0;
-  addMsg('user', 'Shuru karo').then(() => goToState('ask_question'));
+  goToState('ask_question');
 }
 
-function simulateRecording(qIdx) {
-  const btn = document.getElementById('answerMicBtn-' + qIdx);
+function simulateRecording() {
+  const btn = document.getElementById('answerMicBtn');
   if (!btn) return;
   stopTTS(); // Stop TTS if still speaking
   btn.classList.add('recording');
@@ -718,7 +839,7 @@ function simulateRecording(qIdx) {
     <div style="width:3px;background:white;border-radius:99px;animation:waveAnim 1.2s infinite;height:16px;"></div>
     <div style="width:3px;background:white;border-radius:99px;animation:waveAnim 0.8s infinite;height:12px;"></div>
   </div>`;
-  const area = document.getElementById('answerMicArea-' + qIdx);
+  const area = document.getElementById('answerMicArea');
   if (area) {
     const label = area.querySelector('.mic-label');
     if (label) { label.textContent = 'Recording...'; label.style.color = 'var(--error)'; }
@@ -726,24 +847,24 @@ function simulateRecording(qIdx) {
     if (sub) sub.textContent = 'Rokne ke liye dobara dabao';
   }
 
-  btn.onclick = function() { finishRecording(qIdx); };
+  btn.onclick = function() { finishRecording(); };
 
   // Auto-stop after 4 seconds
   setTimeout(() => {
     if (btn.classList.contains('recording')) {
-      finishRecording(qIdx);
+      finishRecording();
     }
   }, 4000);
 }
 
-function finishRecording(qIdx) {
-  const btn = document.getElementById('answerMicBtn-' + qIdx);
+function finishRecording() {
+  const btn = document.getElementById('answerMicBtn');
   if (!btn) return;
   btn.classList.remove('recording');
   btn.innerHTML = ICONS.check;
   btn.style.background = 'var(--success)';
   btn.onclick = null;
-  const area = document.getElementById('answerMicArea-' + qIdx);
+  const area = document.getElementById('answerMicArea');
   if (area) {
     const label = area.querySelector('.mic-label');
     if (label) { label.textContent = 'Record ho gaya'; label.style.color = 'var(--success)'; }
@@ -801,7 +922,7 @@ async function preloadAllTTS() {
         body: JSON.stringify({
           inputs: [text],
           target_language_code: 'hi-IN',
-          speaker: 'shubh',
+          speaker: 'priya',
           model: 'bulbul:v3',
           enable_preprocessing: true
         })

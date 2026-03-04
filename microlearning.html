@@ -500,11 +500,38 @@ const ICONS = {
   arrowRight: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
 };
 
-// === Sarvam AI TTS with pre-caching ===
+// === Sarvam AI TTS with pre-caching (AudioContext unlock pattern) ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 let ttsAudio = null;
 const ttsCache = {};
+let playbackCtx = null;
+let lastTtsBase64 = null;
+
+function unlockAudio() {
+  if (playbackCtx) return;
+  try {
+    playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+    playbackCtx.resume();
+  } catch(e) { console.warn('AudioContext:', e); }
+}
+function base64ToArrayBuffer(b64) {
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+function playTtsViaContext(base64) {
+  if (!playbackCtx || !base64) return;
+  try {
+    playbackCtx.resume();
+    playbackCtx.decodeAudioData(base64ToArrayBuffer(base64)).then(buf => {
+      const src = playbackCtx.createBufferSource();
+      src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
+    }).catch(e => console.error('decodeAudioData:', e));
+  } catch(e) { console.error('playTtsViaContext:', e); }
+}
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 const TTS_TEXTS = {
   ctr: 'Click-Through Rate matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein toh 5 percent CTR hai.',
@@ -513,29 +540,37 @@ const TTS_TEXTS = {
   anchor: 'Jab log scroll karte hain, unka dimaag 2 second mein decide karta hai ki click karna hai ya nahi. Ek achha thumbnail woh decision jeetata hai.'
 };
 
-// Pre-cache all TTS audio on page load
-function preCacheOne(text) {
-  return fetch(SARVAM_TTS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
-    body: JSON.stringify({
-      inputs: [text],
-      target_language_code: 'hi-IN',
-      speaker: 'priya',
-      model: 'bulbul:v3',
-      enable_preprocessing: true,
-      pace: 1.2
-    })
-  }).then(r => r.ok ? r.json() : null)
-    .then(data => { if (data && data.audios && data.audios[0]) ttsCache[text] = data.audios[0]; })
-    .catch(() => {});
+async function preCacheTTS() {
+  for (const key of Object.keys(TTS_TEXTS)) {
+    try {
+      const res = await fetch(SARVAM_TTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
+        body: JSON.stringify({
+          inputs: [TTS_TEXTS[key]],
+          target_language_code: 'hi-IN',
+          speaker: 'anushka',
+          model: 'bulbul:v2',
+          enable_preprocessing: true,
+          pace: 1.2
+        })
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.audios && data.audios[0]) ttsCache[TTS_TEXTS[key]] = data.audios[0];
+    } catch (e) { /* ignore pre-cache errors */ }
+  }
 }
-// Fire all TTS pre-cache calls in parallel on page load
-Promise.all(Object.values(TTS_TEXTS).map(preCacheOne));
+preCacheTTS();
 
 async function speakHindi(text) {
   stopTTS();
-  if (ttsCache[text]) { playBase64Audio(ttsCache[text]); return; }
+  if (ttsCache[text]) {
+    lastTtsBase64 = ttsCache[text];
+    if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
+    else { playBase64Audio(lastTtsBase64); }
+    return;
+  }
   try {
     const res = await fetch(SARVAM_TTS_URL, {
       method: 'POST',
@@ -543,8 +578,8 @@ async function speakHindi(text) {
       body: JSON.stringify({
         inputs: [text],
         target_language_code: 'hi-IN',
-        speaker: 'priya',
-        model: 'bulbul:v3',
+        speaker: 'anushka',
+        model: 'bulbul:v2',
         enable_preprocessing: true,
         pace: 1.2
       })
@@ -552,7 +587,12 @@ async function speakHindi(text) {
     if (!res.ok) throw new Error('TTS error');
     const data = await res.json();
     const b64 = data.audios && data.audios[0];
-    if (b64) { ttsCache[text] = b64; playBase64Audio(b64); }
+    if (b64) {
+      ttsCache[text] = b64;
+      lastTtsBase64 = b64;
+      if (playbackCtx) { playTtsViaContext(b64); }
+      else { playBase64Audio(b64); }
+    }
   } catch (err) {
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'hi-IN'; utter.rate = 0.85;
@@ -687,9 +727,6 @@ function goToStep(n) {
       nextBtn.disabled = false;
     }
   }
-
-  // Enable generate button if form is pre-filled
-  if (n === 4) updateCreateBtn();
 
   // Run quality check animation when arriving at step 5
   if (n === 5 && !qualityDone) {
@@ -870,7 +907,7 @@ function renderCarousel() {
             <h4>${ICONS.wand} Guided Creation</h4>
             <div class="create-sub">Apna idea frame karo. Ek bold version try karo.</div>
             <div class="create-label">Subject (Kaun/Kya?)</div>
-            <input class="create-input" id="createSubject" type="text" value="Stressed chef in kitchen" oninput="updateCreateBtn()" />
+            <input class="create-input" id="createSubject" type="text" placeholder="e.g. Stressed chef in kitchen" oninput="updateCreateBtn()" />
             <div class="create-row">
               <div>
                 <div class="create-label">Emotion</div>
@@ -890,8 +927,8 @@ function renderCarousel() {
               </div>
             </div>
             <div class="create-label">Overlay Text (Hook)</div>
-            <input class="create-input" id="createText" type="text" value="SECRET REVEALED!" />
-            <button class="create-btn" id="createGenBtn" onclick="generateInCarousel()">
+            <input class="create-input" id="createText" type="text" placeholder="e.g. SECRET REVEALED!" />
+            <button class="create-btn" id="createGenBtn" disabled onclick="generateInCarousel()">
               ${ICONS.wand} Generate Karo
             </button>
           </div>

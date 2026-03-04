@@ -346,7 +346,7 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z"/></svg>
     </div>
     <div class="chat-header-info">
-      <h3>Govt Exam Prep Coach</h3>
+      <h3>Bharat Career Prep</h3>
       <span>Online</span>
     </div>
   </div>
@@ -398,20 +398,51 @@ const ICONS = {
   sparkle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>',
 };
 
-// === Sarvam AI Text-to-Speech Engine ===
+// === Sarvam AI Text-to-Speech Engine (AudioContext unlock pattern) ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
-const SARVAM_SPEAKER = 'amelia';
+const SARVAM_SPEAKER = 'anushka';
 const ttsCache = new Map();
 let currentAudio = null;
+let playbackCtx = null;
+let lastTtsBase64 = null;
+
+function unlockAudio() {
+  if (playbackCtx) return;
+  try {
+    playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+    playbackCtx.resume();
+  } catch(e) { console.warn('AudioContext:', e); }
+}
+function base64ToArrayBuffer(b64) {
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+function playTtsViaContext(base64) {
+  if (!playbackCtx || !base64) return;
+  try {
+    playbackCtx.resume();
+    playbackCtx.decodeAudioData(base64ToArrayBuffer(base64)).then(buf => {
+      const src = playbackCtx.createBufferSource();
+      src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
+    }).catch(e => console.error('decodeAudioData:', e));
+  } catch(e) { console.error('playTtsViaContext:', e); }
+}
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 async function sarvamTTS(text, pace = 1.0) {
   const cacheKey = text + '|' + pace;
   if (ttsCache.has(cacheKey)) {
-    const audio = new Audio(ttsCache.get(cacheKey));
-    if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-    currentAudio = audio;
-    audio.play().catch(() => {});
+    lastTtsBase64 = ttsCache.get(cacheKey);
+    if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
+    else {
+      const audio = new Audio('data:audio/wav;base64,' + lastTtsBase64);
+      if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+      currentAudio = audio;
+      audio.play().catch(() => {});
+    }
     return;
   }
   try {
@@ -422,18 +453,21 @@ async function sarvamTTS(text, pace = 1.0) {
         inputs: [text],
         target_language_code: 'en-IN',
         speaker: SARVAM_SPEAKER,
-        model: 'bulbul:v3',
+        model: 'bulbul:v2',
         pace: pace
       })
     });
     const data = await res.json();
     if (data.audios && data.audios[0]) {
-      const dataUrl = 'data:audio/wav;base64,' + data.audios[0];
-      ttsCache.set(cacheKey, dataUrl);
-      const audio = new Audio(dataUrl);
-      if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-      currentAudio = audio;
-      audio.play().catch(() => {});
+      lastTtsBase64 = data.audios[0];
+      ttsCache.set(cacheKey, lastTtsBase64);
+      if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
+      else {
+        const audio = new Audio('data:audio/wav;base64,' + lastTtsBase64);
+        if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+        currentAudio = audio;
+        audio.play().catch(() => {});
+      }
     }
   } catch (e) {
     console.warn('Sarvam TTS failed:', e);
@@ -1156,29 +1190,13 @@ function playAudioConcept(btn) {
   }, 15000);
 }
 
-// === Preload TTS ===
-function preloadTTS() {
-  const text = "Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.";
-  const pace = 1.15;
-  const cacheKey = text + '|' + pace;
-  if (ttsCache.has(cacheKey)) return;
-  fetch(SARVAM_TTS_URL, {
-    method: 'POST',
-    headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ inputs: [text], target_language_code: 'en-IN', speaker: SARVAM_SPEAKER, model: 'bulbul:v3', pace })
-  }).then(r => r.json()).then(data => {
-    if (data.audios && data.audios[0]) ttsCache.set(cacheKey, 'data:audio/wav;base64,' + data.audios[0]);
-  }).catch(() => {});
-}
-
 // === Init ===
 function init() {
-  addAiMsg("Namaste Deepak! I'm your Govt Exam Prep Coach. I can help you discover the right government exam, practice with mock quizzes, or review concepts with flashcards.");
+  addAiMsg("Namaste Deepak! I'm your Bharat Career Prep AI. I can help you discover the right government exam, practice with mock quizzes, or review concepts with flashcards.");
   setTimeout(() => {
     addAiMsg("What would you like to do today?");
     showEntryChips();
   }, 500);
-  preloadTTS();
 }
 
 init();
