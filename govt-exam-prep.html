@@ -346,7 +346,7 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z"/></svg>
     </div>
     <div class="chat-header-info">
-      <h3>Bharat Career Prep</h3>
+      <h3>Govt Exam Prep Coach</h3>
       <span>Online</span>
     </div>
   </div>
@@ -1156,13 +1156,29 @@ function playAudioConcept(btn) {
   }, 15000);
 }
 
+// === Preload TTS ===
+function preloadTTS() {
+  const text = "Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.";
+  const pace = 1.15;
+  const cacheKey = text + '|' + pace;
+  if (ttsCache.has(cacheKey)) return;
+  fetch(SARVAM_TTS_URL, {
+    method: 'POST',
+    headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: [text], target_language_code: 'en-IN', speaker: SARVAM_SPEAKER, model: 'bulbul:v3', pace })
+  }).then(r => r.json()).then(data => {
+    if (data.audios && data.audios[0]) ttsCache.set(cacheKey, 'data:audio/wav;base64,' + data.audios[0]);
+  }).catch(() => {});
+}
+
 // === Init ===
 function init() {
-  addAiMsg("Namaste Deepak! I'm your Bharat Career Prep AI. I can help you discover the right government exam, practice with mock quizzes, or review concepts with flashcards.");
+  addAiMsg("Namaste Deepak! I'm your Govt Exam Prep Coach. I can help you discover the right government exam, practice with mock quizzes, or review concepts with flashcards.");
   setTimeout(() => {
     addAiMsg("What would you like to do today?");
     showEntryChips();
   }, 500);
+  preloadTTS();
 }
 
 init();
