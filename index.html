@@ -383,8 +383,8 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
   display: flex; align-items: center; justify-content: center; transition: all 0.2s;
 }
 .call-btn:active { transform: scale(0.9); }
-.call-btn-mic { background: var(--primary); color: var(--white); box-shadow: 0 4px 20px rgba(53,53,243,0.4); }
-.call-btn-mic.recording { background: var(--error); animation: pulse 1.2s infinite; }
+.call-btn-mic { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.35); border: 1.5px solid rgba(255,255,255,0.15); transition: background 0.3s, color 0.3s, box-shadow 0.3s; }
+.call-btn-mic.mic-active { background: #ffffff; color: var(--primary); box-shadow: 0 4px 24px rgba(255,255,255,0.25); border-color: transparent; }
 .call-btn-end { background: var(--error); color: var(--white); width: 48px; height: 48px; }
 .call-btn-listen { background: rgba(255,255,255,0.12); color: var(--white); width: 48px; height: 48px; border: 1px solid rgba(255,255,255,0.15); }
 
@@ -491,7 +491,7 @@ async function sarvamTTS(text, pace = 1.0, onended = null) {
     if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
     currentAudio = audio;
     if (onended) audio.onended = onended;
-    audio.play().catch(() => {});
+    audio.play().catch(() => { if (onended) setTimeout(onended, 300); });
     return;
   }
   try {
@@ -514,7 +514,7 @@ async function sarvamTTS(text, pace = 1.0, onended = null) {
       if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
       currentAudio = audio;
       if (onended) audio.onended = onended;
-      audio.play().catch(() => {});
+      audio.play().catch(() => { if (onended) setTimeout(onended, 300); });
     }
   } catch (e) {
     console.warn('Sarvam TTS failed, falling back to browser TTS:', e);
@@ -937,32 +937,20 @@ async function goToState(state) {
       break;
 
     case 'j3_sarah_call':
+      // Remove ALL existing call cards synchronously before inserting new one
+      document.querySelectorAll('.call-card').forEach(c => c.closest('.msg')?.remove());
+      stopCallTimer();
       callStep = 0;
       callSeconds = 0;
-      await addRaw(`<div class="call-card" id="callCard">
-        <div class="call-hero">
-          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
-          <div class="call-name">Sarah</div>
-          <div class="call-role">Business English Coach</div>
-          <div class="call-status" id="callStatus"><div class="call-status-dot"></div> Connecting...</div>
-          <div class="call-timer" id="callTimer">00:00</div>
-        </div>
-        <div class="call-waves" id="callWaves">
-          ${[10,18,28,36,28,36,28,18,10].map((h,i) => `<div class="call-wave-bar" style="animation-delay:${i*0.12}s;height:${h}px"></div>`).join('')}
-        </div>
-        <div id="callContent"></div>
-        <div class="call-actions" id="callActions">
-          <button class="call-btn call-btn-listen" onclick="replayCallAudio()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-          </button>
-          <button class="call-btn call-btn-mic" id="callMicBtn" onclick="advanceCall()" style="opacity:0.4;pointer-events:none">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
-          </button>
-          <button class="call-btn call-btn-end" onclick="endCall()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-          </button>
-        </div>
-      </div>`, 0);
+      preCacheCallAudio();
+      // Insert synchronously (no setTimeout) to prevent duplicate race condition
+      { const _w = [10,18,28,36,28,36,28,18,10];
+        const _d = document.createElement('div');
+        _d.className = 'msg msg-ai fade-in';
+        _d.innerHTML = `<div class="call-card" id="callCard"><div class="call-hero"><div class="call-avatar">&#128105;&#8205;&#127979;</div><div class="call-name">Sarah</div><div class="call-role">Business English Coach</div><div class="call-status" id="callStatus"><div class="call-status-dot"></div> Connecting...</div><div class="call-timer" id="callTimer">00:00</div></div><div class="call-waves" id="callWaves">${_w.map((h,i)=>`<div class="call-wave-bar" style="animation-delay:${i*0.12}s;height:${h}px"></div>`).join('')}</div><div id="callContent"></div><div class="call-actions" id="callActions"><button class="call-btn call-btn-listen" onclick="replayCallAudio()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button><button class="call-btn call-btn-mic" id="callMicBtn" onclick="advanceCall()"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg></button><button class="call-btn call-btn-end" onclick="endCall()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg></button></div></div>`;
+        chatArea.appendChild(_d);
+        scrollToBottom();
+      }
       startCallTimer();
       setTimeout(() => renderCallStep(0), 600);
       break;
@@ -1088,6 +1076,21 @@ function stopCallTimer() {
   if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
 }
 
+// Pre-fetch all call round TTS in parallel so there's no delay during the call
+function preCacheCallAudio() {
+  callRounds.forEach(round => {
+    const cacheKey = round.speakText + '|1';
+    if (ttsCache.has(cacheKey)) return;
+    fetch(SARVAM_TTS_URL, {
+      method: 'POST',
+      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inputs: [round.speakText], target_language_code: 'en-IN', speaker: SARVAM_SPEAKER, model: 'bulbul:v3', pace: 1.0 })
+    }).then(r => r.json()).then(data => {
+      if (data.audios?.[0]) ttsCache.set(cacheKey, 'data:audio/wav;base64,' + data.audios[0]);
+    }).catch(() => {});
+  });
+}
+
 function renderCallStep(step) {
   const round = callRounds[step];
   if (!round) return;
@@ -1110,46 +1113,39 @@ function renderCallStep(step) {
     statusEl.innerHTML = '<div class="call-status-dot"></div> ' + round.status;
   }
 
-  // Build dynamic content
-  let html = '<div class="call-transcript fade-in"><div class="call-transcript-label">Live Transcript</div>' + round.transcript + '</div>';
-  if (round.hint) html += '<div class="call-hint">' + round.hint + '</div>';
-  if (round.correction) html += round.correction;
-  if (round.summary) html += round.summary;
-  content.innerHTML = html;
+  // Disable mic immediately (grey)
+  if (micBtn) micBtn.classList.remove('mic-active');
 
   // Show/hide waves
-  if (round.statusColor) {
-    wavesEl.style.display = 'none';
-  } else {
-    wavesEl.style.display = 'flex';
-  }
+  wavesEl.style.display = round.statusColor ? 'none' : 'flex';
 
-  // Disable mic while speaking
-  if (micBtn) {
-    micBtn.style.opacity = '0.4';
-    micBtn.style.pointerEvents = 'none';
-    micBtn.classList.remove('recording');
-  }
-
-  // On final step, hide mic and show chips after card
+  // On final step, hide mic button, keep listen only
   const isFinal = step === callRounds.length - 1;
   if (isFinal && actionsEl) {
     actionsEl.innerHTML = '<button class="call-btn call-btn-listen" onclick="replayCallAudio()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>';
   }
 
-  // Auto-speak Sarah's text
+  // Fade out → swap content → fade in
+  content.style.transition = 'opacity 0.18s ease';
+  content.style.opacity = '0';
+  setTimeout(() => {
+    let html = '<div class="call-transcript"><div class="call-transcript-label">Live Transcript</div>' + round.transcript + '</div>';
+    if (round.hint) html += '<div class="call-hint">' + round.hint + '</div>';
+    if (round.correction) html += round.correction;
+    if (round.summary) html += round.summary;
+    content.innerHTML = html;
+    content.style.opacity = '1';
+    scrollToBottom();
+  }, 180);
+
+  // Auto-speak Sarah's text; on end → turn mic white (active)
   sarvamTTS(round.speakText, 1.0, () => {
     if (!isFinal) {
       const mic = document.getElementById('callMicBtn');
-      if (mic) {
-        mic.style.opacity = '1';
-        mic.style.pointerEvents = 'auto';
-      }
-      // Update status to show mic is ready
+      if (mic) mic.classList.add('mic-active');
       const st = document.getElementById('callStatus');
       if (st) st.innerHTML = '<div class="call-status-dot"></div> Your turn \u2014 tap mic to speak';
     } else {
-      // Show end-of-session chips
       addRaw('<div class="chips" style="margin-top:12px;"><span class="chip" onclick="goToState(\'back_to_menu\')">Back to menu</span><span class="chip" onclick="goToState(\'j3_companions\')">Practice with someone else</span></div>', 0);
     }
   });
@@ -1159,22 +1155,21 @@ function renderCallStep(step) {
 
 function advanceCall() {
   const micBtn = document.getElementById('callMicBtn');
-  if (!micBtn) return;
+  // Only fire when mic is white/active (user's turn)
+  if (!micBtn || !micBtn.classList.contains('mic-active')) return;
 
-  // Simulate recording animation
-  micBtn.classList.add('recording');
-  micBtn.style.pointerEvents = 'none';
+  // Grey out mic immediately (toggle off)
+  micBtn.classList.remove('mic-active');
 
   const statusEl = document.getElementById('callStatus');
-  if (statusEl) statusEl.innerHTML = '<div class="call-status-dot" style="background:var(--error)"></div> Recording...';
+  if (statusEl) statusEl.innerHTML = '<div class="call-status-dot" style="background:rgba(255,255,255,0.4)"></div> Processing...';
 
   setTimeout(() => {
-    micBtn.classList.remove('recording');
     callStep++;
     if (callStep < callRounds.length) {
       renderCallStep(callStep);
     }
-  }, 1500);
+  }, 700);
 }
 
 function replayCallAudio() {
