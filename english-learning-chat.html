@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Learning - Chat Prototype</title>
+<!-- jbiq:v3.5.0:sunit1986 -->
+<style>
+@font-face { font-family: 'JioType'; font-weight: 400; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeVarW05-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+@font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+
+:root {
+  --primary: #3535f3;
+  --primary-light: #e8e8fc;
+  --primary-dark: #3900ad;
+  --secondary: #f7ab20;
+  --sparkle: #1eccb0;
+  --error: #fa2f40;
+  --warning: #f06d0f;
+  --success: #25ab21;
+  --grey-100: #141414;
+  --grey-80: #5c5c5c;
+  --grey-60: #8f8f8f;
+  --grey-40: #e0e0e0;
+  --grey-20: #f5f5f5;
+  --surface-ghost: #eeeeef;
+  --surface-bold: #3900ad;
+  --white: #ffffff;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 23px;
+  --radius-pill: 999px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'JioType'; background: var(--grey-20); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
+
+.phone-frame {
+  width: 100%; max-width: 420px; height: 900px; background: var(--white);
+  border-radius: 54px; border: 12px solid var(--grey-100);
+  position: relative; overflow: hidden; box-shadow: 0 60px 120px -30px rgba(0,0,0,0.3);
+}
+
+/* Notch */
+.notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 150px; height: 34px; background: var(--grey-100);
+  border-radius: 0 0 24px 24px; z-index: 100;
+}
+.notch-pill { width: 50px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 99px; position: absolute; top: 14px; left: 50%; transform: translateX(-50%); }
+
+/* Status bar */
+.status-bar {
+  height: 50px; padding: 0 28px; display: flex; justify-content: space-between; align-items: center;
+  position: relative; z-index: 90; font-size: 14px; font-weight: 700; color: var(--grey-100);
+}
+.battery { width: 28px; height: 14px; border: 2px solid var(--grey-60); border-radius: 4px; position: relative; }
+.battery::after { content: ''; position: absolute; right: -5px; top: 3px; width: 3px; height: 6px; background: var(--grey-60); border-radius: 0 2px 2px 0; }
+.battery-fill { width: 70%; height: 100%; background: var(--grey-100); border-radius: 2px; }
+
+/* Chat header */
+.chat-header {
+  height: 56px; padding: 0 16px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--grey-40); background: var(--white); position: relative; z-index: 80;
+}
+.chat-header-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.chat-header-info h3 { font-size: 16px; font-weight: 700; color: var(--grey-100); line-height: 1.2; }
+.chat-header-info span { font-size: 12px; color: var(--success); font-weight: 500; }
+
+/* Chat area */
+.chat-area {
+  flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 8px;
+  display: flex; flex-direction: column; gap: 12px;
+  scroll-behavior: smooth; background: var(--white);
+}
+.chat-area::-webkit-scrollbar { width: 0; }
+.chat-body { display: flex; flex-direction: column; height: calc(900px - 50px - 56px - 68px); }
+
+/* Message bubbles */
+.msg { max-width: 88%; animation: msgIn 0.35s ease-out; }
+.msg-ai { align-self: flex-start; }
+.msg-user { align-self: flex-end; }
+
+.bubble {
+  padding: 12px 16px; font-size: 14px; line-height: 1.5; color: var(--grey-100);
+  word-wrap: break-word;
+}
+.bubble-ai {
+  background: var(--surface-ghost); border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
+}
+.bubble-user {
+  background: var(--primary); color: var(--white);
+  border-radius: var(--radius-lg) 4px var(--radius-lg) var(--radius-lg);
+}
+.bubble-ai .guj { color: var(--grey-80); font-size: 13px; margin-top: 4px; display: block; }
+
+/* Suggested chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chip {
+  padding: 8px 16px; border-radius: var(--radius-pill); border: 1.5px solid var(--primary);
+  color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer;
+  background: var(--white); transition: all 0.2s;
+}
+.chip:hover, .chip:active { background: var(--primary); color: var(--white); }
+
+/* Cards inside chat */
+.card-grid { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin-top: 8px; }
+.card-grid::-webkit-scrollbar { height: 0; }
+.situation-card {
+  flex-shrink: 0; width: 130px; padding: 16px; border-radius: var(--radius-lg);
+  background: var(--white); border: 1.5px solid var(--grey-40); cursor: pointer;
+  transition: all 0.2s; display: flex; flex-direction: column; gap: 8px;
+}
+.situation-card:hover, .situation-card:active { border-color: var(--primary); background: var(--primary-light); }
+.situation-card .card-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--white); }
+.situation-card .card-title { font-size: 13px; font-weight: 700; color: var(--grey-100); }
+.situation-card .card-sub { font-size: 11px; color: var(--grey-60); }
+
+/* Entry point cards */
+.entry-card {
+  padding: 14px 16px; border-radius: var(--radius-lg); background: var(--white);
+  border: 1.5px solid var(--grey-40); cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 12px; margin-top: 6px;
+}
+.entry-card:hover, .entry-card:active { border-color: var(--primary); background: var(--primary-light); }
+.entry-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--primary);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.entry-card h4 { font-size: 14px; font-weight: 700; color: var(--grey-100); }
+.entry-card p { font-size: 12px; color: var(--grey-60); margin-top: 2px; }
+
+/* Companion cards */
+.companion-card {
+  flex-shrink: 0; width: 140px; padding: 16px; border-radius: var(--radius-lg);
+  background: var(--white); border: 1.5px solid var(--grey-40); cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.companion-card:hover { border-color: var(--primary); }
+.companion-avatar { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--white); }
+.companion-card h4 { font-size: 14px; font-weight: 700; color: var(--grey-100); }
+.companion-card .comp-type { font-size: 11px; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.companion-card .comp-sub { font-size: 11px; color: var(--grey-60); margin-top: 2px; }
+
+/* Correction card */
+.correction-card {
+  background: var(--grey-100); border-radius: var(--radius-lg); padding: 16px; margin-top: 8px; color: var(--white);
+}
+.correction-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.correction-header svg { color: var(--sparkle); }
+.correction-header span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--sparkle); }
+.correction-text { font-size: 18px; font-weight: 700; line-height: 1.4; margin-bottom: 12px; }
+.grammar-box {
+  background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.grammar-label { display: flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+.grammar-text { font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+
+/* Phrase card */
+.phrase-card {
+  background: var(--white); border: 1.5px solid var(--grey-40); border-radius: var(--radius-lg);
+  padding: 14px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.phrase-card .phrase-text { flex: 1; }
+.phrase-card .phrase-en { font-size: 14px; font-weight: 700; color: var(--grey-100); line-height: 1.4; }
+.phrase-card .phrase-phonetic { font-size: 11px; color: var(--primary); margin-top: 2px; font-style: italic; }
+.phrase-card .phrase-context { font-size: 10px; color: var(--grey-60); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
+.phrase-btns { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* Vocab card */
+.vocab-card {
+  background: var(--primary); border-radius: var(--radius-lg); padding: 16px; margin-top: 6px; color: var(--white);
+}
+.vocab-word { font-size: 22px; font-weight: 900; margin-bottom: 2px; }
+.vocab-phonetic { font-size: 12px; opacity: 0.7; font-style: italic; margin-bottom: 8px; }
+.vocab-meaning-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; margin-bottom: 2px; }
+.vocab-meaning { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.vocab-usage { font-size: 12px; opacity: 0.8; font-style: italic; line-height: 1.4; margin-bottom: 8px; }
+.vocab-mistake {
+  background: rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.vocab-mistake .wrong { color: var(--error); font-size: 12px; }
+.vocab-mistake .correct { color: var(--sparkle); font-size: 12px; font-weight: 700; margin-top: 2px; }
+
+/* Greeting card */
+.greeting-card {
+  background: var(--surface-ghost); border-radius: var(--radius-lg); padding: 14px; margin-top: 6px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.greeting-en { font-size: 16px; font-weight: 900; color: var(--grey-100); }
+.greeting-guj { font-size: 13px; color: var(--grey-80); margin-top: 2px; }
+.greeting-phonetic { font-size: 11px; color: var(--primary); font-style: italic; margin-top: 2px; }
+
+/* Milestone card */
+.milestone-card {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius-lg); padding: 20px; margin-top: 8px; color: var(--white); text-align: center;
+}
+.milestone-icon { width: 64px; height: 64px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.milestone-title { font-size: 20px; font-weight: 900; margin-bottom: 4px; }
+.milestone-sub { font-size: 13px; opacity: 0.8; margin-bottom: 12px; }
+.milestone-plan { background: rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 12px; text-align: left; }
+.milestone-plan-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+.milestone-plan-num { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+
+/* Listen button */
+.listen-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+  border-radius: var(--radius-pill); background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2); color: var(--white); font-size: 11px;
+  font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.listen-btn:hover { background: rgba(255,255,255,0.2); }
+
+/* Icon buttons */
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; border: none; transition: all 0.2s;
+}
+.icon-btn-primary { background: var(--primary); color: var(--white); }
+.icon-btn-ghost { background: var(--surface-ghost); color: var(--primary); }
+.icon-btn:active { transform: scale(0.9); }
+
+/* Pronunciation popover */
+.pron-popover {
+  background: var(--grey-100); color: var(--white); border-radius: var(--radius-md);
+  padding: 12px 16px; margin-top: 6px; font-size: 13px; line-height: 1.5;
+  border-left: 3px solid var(--secondary);
+}
+.pron-popover .pron-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--secondary); letter-spacing: 0.5px; margin-bottom: 4px; }
+.pron-popover .pron-ipa { font-style: italic; color: var(--sparkle); margin-bottom: 4px; }
+.pron-popover .pron-tip { color: rgba(255,255,255,0.7); }
+
+/* Mic recording state */
+.mic-area {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px 0; margin-top: 8px;
+}
+.mic-btn-large {
+  width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: var(--white);
+  display: flex; align-items: center; justify-content: center; border: none;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(53,53,243,0.3); transition: all 0.2s;
+}
+.mic-btn-large:active { transform: scale(0.9); }
+.mic-btn-large.recording { background: var(--error); animation: pulse 1.2s infinite; }
+.mic-label { font-size: 13px; font-weight: 700; color: var(--primary); }
+.mic-waves { display: flex; gap: 3px; align-items: center; height: 32px; }
+.mic-wave { width: 3px; background: var(--primary); border-radius: 99px; animation: waveAnim 0.8s ease-in-out infinite; }
+
+/* Sarah avatar in chat */
+.sarah-msg { display: flex; gap: 8px; align-items: flex-start; }
+.sarah-avatar-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; color: var(--white); }
+
+/* Input bar */
+.input-bar {
+  height: 68px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid var(--grey-40); background: var(--white); position: relative; z-index: 80;
+}
+.input-field {
+  flex: 1; height: 44px; border-radius: var(--radius-xl); background: var(--surface-ghost);
+  border: none; padding: 0 16px; font-family: 'JioType'; font-size: 14px; color: var(--grey-100);
+  outline: none;
+}
+.input-field::placeholder { color: var(--grey-60); }
+.send-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--primary); border: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+}
+.send-btn:active { transform: scale(0.9); }
+.mic-input-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--surface-ghost); border: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+}
+
+/* Home indicator */
+.home-indicator {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 4px; background: var(--grey-40); border-radius: 99px; z-index: 100;
+}
+
+/* Typing indicator */
+.typing { display: flex; gap: 4px; padding: 12px 16px; }
+.typing-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--grey-60);
+  animation: typingAnim 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-ghost) 25%, var(--grey-40) 50%, var(--surface-ghost) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-sm);
+}
+.skeleton-line { height: 14px; margin-bottom: 8px; }
+.skeleton-line:last-child { width: 60%; }
+
+/* Animations */
+@keyframes msgIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(250,47,64,0.4); } 50% { box-shadow: 0 0 0 16px rgba(250,47,64,0); } }
+@keyframes waveAnim { 0%, 100% { height: 6px; } 50% { height: 24px; } }
+@keyframes typingAnim { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* Utility */
+.hidden { display: none !important; }
+.fade-in { animation: msgIn 0.4s ease-out; }
+.flex-col { display: flex; flex-direction: column; }
+.text-center { text-align: center; }
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mb-4 { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="notch"><div class="notch-pill"></div></div>
+
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="battery"><div class="battery-fill"></div></div>
+  </div>
+
+  <div class="chat-header">
+    <div class="chat-header-avatar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z"/></svg>
+    </div>
+    <div class="chat-header-info">
+      <h3>English Master</h3>
+      <span>Online</span>
+    </div>
+  </div>
+
+  <div class="chat-body">
+    <div class="chat-area" id="chatArea">
+      <!-- Messages rendered by JS -->
+    </div>
+    <div class="input-bar">
+      <button class="mic-input-btn" onclick="handleMicClick()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+      </button>
+      <input class="input-field" id="inputField" placeholder="Type a message..." readonly />
+      <button class="send-btn" onclick="handleSend()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19.79 10.16l-14-6A2 2 0 005 4a2 2 0 00-1.965 2.398 2 2 0 00.355.792L6.76 12l-3.35 4.79a2 2 0 002.38 3.05l14-6a2 2 0 000-3.68z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+// === SVG Icon helpers ===
+const ICONS = {
+  mic: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>',
+  play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.15 10.36l-10-7A2 2 0 008 3a1.88 1.88 0 00-.92.23A2 2 0 006 5v14a2 2 0 001.08 1.77c.282.154.599.233.92.23a2 2 0 001.15-.36l10-7a2 2 0 000-3.28z"/></svg>',
+  success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5.21 7.71l-6 6a1.002 1.002 0 01-1.42 0l-3-3a1.003 1.003 0 111.42-1.42l2.29 2.3 5.29-5.3a1.004 1.004 0 011.42 1.42z"/></svg>',
+  info: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 12h-4a1 1 0 010-2h1v-3h-1a1 1 0 010-2h2a1 1 0 011 1v4h1a1 1 0 010 2z"/></svg>',
+  warning: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 4.5a1 1 0 012 0v6a1 1 0 01-2 0v-6zm1 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>',
+  star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21.37 9.61a1.964 1.964 0 00-.58-.856 1.896 1.896 0 00-.94-.428l-4.235-.646-1.899-4.087a1.963 1.963 0 00-.702-.798 1.917 1.917 0 00-1.016-.295c-.361 0-.712.105-1.016.295a1.85 1.85 0 00-.703.798L8.38 7.68l-4.273.646c-.342.057-.674.2-.94.428a1.964 1.964 0 00-.58.855 1.91 1.91 0 00.447 1.901l3.124 3.213-.74 4.553c-.058.351-.01.712.123 1.036.133.323.36.608.655.817.313.238.703.37 1.102.38.332 0 .655-.076.95-.237l3.788-2.091 3.788 2.09c.285.162.618.248.95.238a1.9 1.9 0 001.101-.351c.285-.21.513-.485.655-.818.133-.323.181-.684.124-1.036l-.74-4.552 3.123-3.213c.228-.257.37-.58.437-.922a1.91 1.91 0 00-.104-1.008z"/></svg>',
+  chevRight: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 17a1.002 1.002 0 01-1.006-1 1 1 0 01.296-.71l3.3-3.29-3.3-3.29a1.004 1.004 0 011.42-1.42l4 4a.997.997 0 01.219 1.095.999.999 0 01-.22.325l-4 4A1 1 0 0110 17z"/></svg>',
+  add: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11h-7V4a1 1 0 00-2 0v7H4a1 1 0 000 2h7v7a1 1 0 002 0v-7h7a1 1 0 000-2z"/></svg>',
+  refresh: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4a8 8 0 013.85 1H15a1 1 0 100 2h3a1 1 0 001-1V3a1 1 0 00-2 0v.36A10 10 0 0012 2a10 10 0 00-8.65 5A9.94 9.94 0 002 12a1 1 0 102 0 8 8 0 018-8zm9.71 7.29A1 1 0 0020 12a8 8 0 01-11.84 7H9a1 1 0 000-2H6a1 1 0 00-1 1v3a1 1 0 102 0v-.36A10 10 0 0012 22a10 10 0 0010-10 1 1 0 00-.29-.71z"/></svg>',
+  profile: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6a4 4 0 11-8 0 4 4 0 018 0zm4 10.5c0 3.038-3.582 5.5-8 5.5s-8-2.462-8-5.5S7.582 11 12 11s8 2.462 8 5.5z"/></svg>',
+};
+
+// === Text-to-Speech Engine ===
+let speechVoice = null;
+function initVoices() {
+  const voices = speechSynthesis.getVoices();
+  // Prefer a natural English voice
+  speechVoice = voices.find(v => v.name.includes('Samantha'))
+    || voices.find(v => v.name.includes('Karen'))
+    || voices.find(v => v.name.includes('Daniel'))
+    || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+    || voices.find(v => v.lang.startsWith('en-') && !v.name.includes('Compact'))
+    || voices.find(v => v.lang.startsWith('en'))
+    || null;
+}
+speechSynthesis.onvoiceschanged = initVoices;
+initVoices();
+
+function speak(text, rate = 0.85) {
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = rate;
+  utter.pitch = 1;
+  if (speechVoice) utter.voice = speechVoice;
+  speechSynthesis.speak(utter);
+}
+
+function speakSlow(text) { speak(text, 0.65); }
+
+function iconBtn(icon, type='primary', onclick='') {
+  return `<button class="icon-btn icon-btn-${type}" ${onclick ? `onclick="${onclick}"` : ''}>${ICONS[icon]}</button>`;
+}
+function listenBtn(text, onclick='') {
+  const safeText = (text||'').replace(/'/g, "\\'");
+  const finalOnclick = onclick || `speak('${safeText}')`;
+  return `<button class="listen-btn" onclick="${finalOnclick}">${ICONS.play} Listen</button>`;
+}
+
+// === State Machine ===
+const chatArea = document.getElementById('chatArea');
+let currentState = 'welcome';
+let messageHistory = [];
+
+function addMsg(type, html, delay=0) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = `msg msg-${type} fade-in`;
+      div.innerHTML = `<div class="bubble bubble-${type}">${html}</div>`;
+      chatArea.appendChild(div);
+      scrollToBottom();
+      resolve();
+    }, delay);
+  });
+}
+
+function addRaw(html, delay=0) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'msg msg-ai fade-in';
+      div.innerHTML = html;
+      chatArea.appendChild(div);
+      scrollToBottom();
+      resolve();
+    }, delay);
+  });
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg msg-ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="bubble bubble-ai"><div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  setTimeout(() => { chatArea.scrollTop = chatArea.scrollHeight; }, 50);
+}
+
+// === State transitions ===
+async function goToState(state) {
+  currentState = state;
+
+  switch(state) {
+
+    case 'welcome':
+      showTyping();
+      await wait(800);
+      hideTyping();
+      await addMsg('ai', `Namaste! I'm your English learning assistant.<span class="guj">હું તમારો English શીખવાનો સાથી છું.</span>`);
+      await wait(400);
+      await addMsg('ai', `Which language would you like to learn through?<span class="guj">કઈ ભાષામાં શીખવું છે?</span>`);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="selectLanguage('ગુજરાતી')">ગુજરાતી</span>
+        <span class="chip" onclick="selectLanguage('हिन्दी')">हिन्दी</span>
+        <span class="chip" onclick="selectLanguage('English')">English</span>
+      </div>`, 200);
+      break;
+
+    case 'lang_selected':
+      showTyping();
+      await wait(600);
+      hideTyping();
+      await addMsg('ai', `Wonderful! હું ગુજરાતીમાં તમને English શીખવીશ. What would you like to do today?`);
+      await addRaw(`
+        <div class="entry-card" onclick="goToState('j1_situations')">
+          <div class="entry-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 12h-4a1 1 0 010-2h1v-3h-1a1 1 0 010-2h2a1 1 0 011 1v4h1a1 1 0 010 2z"/></svg></div>
+          <div><h4>Learn for a situation</h4><p>પરિસ્થિતિ માટે શીખો</p></div>
+        </div>
+        <div class="entry-card" onclick="goToState('j2_topic')">
+          <div class="entry-icon" style="background:var(--secondary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21.37 9.61a1.964 1.964 0 00-.58-.856 1.896 1.896 0 00-.94-.428l-4.235-.646-1.899-4.087a1.963 1.963 0 00-.702-.798 1.917 1.917 0 00-1.016-.295c-.361 0-.712.105-1.016.295a1.85 1.85 0 00-.703.798L8.38 7.68l-4.273.646c-.342.057-.674.2-.94.428a1.964 1.964 0 00-.58.855 1.91 1.91 0 00.447 1.901l3.124 3.213-.74 4.553c-.058.351-.01.712.123 1.036.133.323.36.608.655.817.313.238.703.37 1.102.38.332 0 .655-.076.95-.237l3.788-2.091 3.788 2.09c.285.162.618.248.95.238a1.9 1.9 0 001.101-.351c.285-.21.513-.485.655-.818.133-.323.181-.684.124-1.036l-.74-4.552 3.123-3.213c.228-.257.37-.58.437-.922a1.91 1.91 0 00-.104-1.008z"/></svg></div>
+          <div><h4>Learn vocab for a situation</h4><p>શબ્દભંડોળ વધારો</p></div>
+        </div>
+        <div class="entry-card" onclick="goToState('j3_companions')">
+          <div class="entry-icon" style="background:var(--sparkle)"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16 6a4 4 0 11-8 0 4 4 0 018 0zm4 10.5c0 3.038-3.582 5.5-8 5.5s-8-2.462-8-5.5S7.582 11 12 11s8 2.462 8 5.5z"/></svg></div>
+          <div><h4>Talk to an AI avatar</h4><p>AI સાથે વાત કરો</p></div>
+        </div>
+      `, 300);
+      break;
+
+    // ========== JOURNEY 1: LEARN FOR A SITUATION ==========
+    case 'j1_situations':
+      await addMsg('ai', `Choose a situation you want to prepare for:<span class="guj">કઈ પરિસ્થિતિ માટે તૈયારી કરવી છે?</span>`);
+      await addRaw(`<div class="card-grid">
+        <div class="situation-card" onclick="goToState('j1_bride_prompt')">
+          <div class="card-icon" style="background:var(--primary-dark)">&#128141;</div>
+          <div class="card-title">Meeting Bride</div>
+          <div class="card-sub">કન્યાને મળવું</div>
+        </div>
+        <div class="situation-card" onclick="showNotReady()">
+          <div class="card-icon" style="background:var(--primary)">&#128188;</div>
+          <div class="card-title">Work Meeting</div>
+          <div class="card-sub">કામની મીટિંગ</div>
+        </div>
+        <div class="situation-card" onclick="showNotReady()">
+          <div class="card-icon" style="background:var(--secondary)">&#127858;</div>
+          <div class="card-title">Team Dinner</div>
+          <div class="card-sub">ટીમ ડિનર</div>
+        </div>
+        <div class="situation-card" onclick="showNotReady()">
+          <div class="card-icon" style="background:var(--sparkle)">&#9992;&#65039;</div>
+          <div class="card-title">Business Trip</div>
+          <div class="card-sub">વ્યાપાર પ્રવાસ</div>
+        </div>
+      </div>`, 300);
+      break;
+
+    case 'j1_bride_prompt':
+      await addMsg('user', 'Meeting Bride\'s Family');
+      showTyping();
+      await wait(700);
+      hideTyping();
+      await addMsg('ai', `<strong>Scenario:</strong> તમારે આવતા અઠવાડિયે કન્યાના પરિવારને મળવાનું છે. તેમનું સ્વાગત અંગ્રેજીમાં કરો.<br><br><em style="color:var(--grey-60);">"Welcome the bride's family warmly."</em>`);
+      await addRaw(`<div class="mic-area">
+        <div class="mic-label">Tap the mic and speak in English</div>
+        <div class="mic-waves">
+          ${[8,14,22,28,22,14,8].map((h,i) => `<div class="mic-wave" style="height:${h}px;animation-delay:${i*0.12}s"></div>`).join('')}
+        </div>
+        <button class="mic-btn-large" onclick="simulateRecording()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+        </button>
+      </div>`, 300);
+      break;
+
+    case 'j1_bride_result':
+      await addMsg('user', 'Hello, meeting you is good. Come in please.');
+      showTyping();
+      await wait(1000);
+      hideTyping();
+      await addRaw(`<div class="correction-card">
+        <div class="correction-header">
+          ${ICONS.success}
+          <span>Correct Way</span>
+        </div>
+        <div class="correction-text">It's an honor to meet you. Please come in.</div>
+        <div class="pron-popover" style="border-left-color:var(--sparkle);margin-bottom:12px;">
+          <div class="pron-label">Pronunciation</div>
+          <div class="pron-ipa">/ɪts ən ˈɒn.ər tə miːt juː. pliːz kʌm ɪn/</div>
+          <div class="pron-tip">Stress on "HON-or" and "MEET". Keep "please" soft.</div>
+        </div>
+        <div class="grammar-box">
+          <div class="grammar-label">${ICONS.warning} Grammar Fix</div>
+          <div class="grammar-text">Instead of "Meeting you is good", say <strong>"It's a pleasure to meet you"</strong> or <strong>"It's an honor to meet you"</strong>. These are more natural and polite.</div>
+        </div>
+        ${listenBtn("It's an honor to meet you. Please come in.")}
+      </div>`, 0);
+      await wait(400);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('j1_bride_phrases')">Show me more phrases</span>
+        <span class="chip" onclick="goToState('j1_bride_greetings')">Teach me greetings</span>
+      </div>`, 200);
+      break;
+
+    case 'j1_bride_phrases':
+      await addMsg('user', 'Show me more phrases');
+      showTyping(); await wait(600); hideTyping();
+      await addMsg('ai', `Here are useful phrases for meeting the bride's family:<span class="guj">કન્યાના પરિવારને મળવા માટેના ઉપયોગી વાક્યો:</span>`);
+      const phrases = [
+        { en:"We have been looking forward to this meeting.", ph:"/wiː hæv bɪn ˈlʊk.ɪŋ ˈfɔː.wəd/", ctx:"Expressing excitement", tip:"Stress: LOOK-ing FOR-ward. Don't rush 'have been'." },
+        { en:"How was your journey to the city?", ph:"/haʊ wɒz jɔːr ˈdʒɜː.ni/", ctx:"Small talk", tip:"JUR-nee, not JOR-nee. Keep 'your' short." },
+        { en:"We are honored to have you here.", ph:"/wiː ɑːr ˈɒn.ərd tə hæv juː hɪər/", ctx:"Formal respect", tip:"ON-erd not HON-erd. 'H' is silent." },
+        { en:"Please make yourself at home.", ph:"/pliːz meɪk jɔːˈself ət hoʊm/", ctx:"Warmth", tip:"Natural flow: 'make yerSELF at home'" },
+        { en:"It is wonderful to finally meet you.", ph:"/ɪt ɪz ˈwʌn.dər.fəl tə ˈfaɪ.nəl.i/", ctx:"Heartfelt", tip:"WUN-der-ful, not WAAN-der-ful." },
+      ];
+      for(let i=0; i<phrases.length; i++) {
+        const p = phrases[i];
+        const pidx = storePron(p.en, p.ph, p.tip);
+        await addRaw(`<div class="phrase-card">
+          <div class="phrase-text">
+            <div class="phrase-en">${p.en}</div>
+            <div class="phrase-phonetic">${p.ph}</div>
+            <div class="phrase-context">${p.ctx}</div>
+          </div>
+          <div class="phrase-btns">
+            <button class="icon-btn icon-btn-ghost" onclick="showPronById(this,${pidx})">${ICONS.play}</button>
+            <button class="icon-btn icon-btn-primary" onclick="simulateMicFeedback(this)">${ICONS.mic}</button>
+          </div>
+        </div>`, i === 0 ? 0 : 150);
+      }
+      await addRaw(`<div class="chips" style="margin-top:12px;">
+        <span class="chip" onclick="goToState('j1_bride_greetings')">Quick greetings</span>
+        <span class="chip" onclick="goToState('j1_bride_vocab')">Key vocabulary</span>
+      </div>`, 200);
+      break;
+
+    case 'j1_bride_greetings':
+      await addMsg('user', 'Teach me greetings');
+      showTyping(); await wait(600); hideTyping();
+      await addMsg('ai', `Quick greetings to build confidence:<span class="guj">આત્મવિશ્વાસ માટે ઝડપી અભિવાદન:</span>`);
+      const greetings = [
+        { en:"Please come in!", guj:"અંદર આવો!", ph:"/pliːz kʌm ɪn/", tip:"Short and warm. Emphasize 'come IN'." },
+        { en:"Please have a seat.", guj:"બેસો.", ph:"/pliːz hæv ə siːt/", tip:"'Have a' blends into 'hava'. Natural English flow." },
+        { en:"Nice to meet you.", guj:"તમને મળીને આનંદ થયો.", ph:"/naɪs tə miːt juː/", tip:"NICE rhymes with ICE. Keep 'to meet' connected." },
+        { en:"Welcome to our home.", guj:"અમારા ઘરે આવો.", ph:"/ˈwel.kəm tə aʊər hoʊm/", tip:"WEL-come, stress first syllable. 'Our' sounds like 'are'." },
+        { en:"Can I get you something to drink?", guj:"કંઈ પીવાનું લાવું?", ph:"/kæn aɪ ɡet juː ˈsʌm.θɪŋ/", tip:"Fast speech: 'Can I getcha somethin'. Very natural!" },
+      ];
+      for(let i=0; i<greetings.length; i++) {
+        const g = greetings[i];
+        const gidx = storePron(g.en, g.ph, g.tip);
+        await addRaw(`<div class="greeting-card">
+          <div>
+            <div class="greeting-en">${g.en}</div>
+            <div class="greeting-guj">${g.guj}</div>
+            <div class="greeting-phonetic">${g.ph}</div>
+          </div>
+          <div class="phrase-btns">
+            <button class="icon-btn icon-btn-ghost" onclick="showPronById(this,${gidx})">${ICONS.play}</button>
+            <button class="icon-btn icon-btn-primary" onclick="simulateMicFeedback(this)">${ICONS.mic}</button>
+          </div>
+        </div>`, i === 0 ? 0 : 150);
+      }
+      await addRaw(`<div class="chips" style="margin-top:12px;">
+        <span class="chip" onclick="goToState('j1_bride_vocab')">Key vocabulary</span>
+        <span class="chip" onclick="goToState('j1_bride_milestone')">Finish lesson</span>
+      </div>`, 200);
+      break;
+
+    case 'j1_bride_vocab':
+      await addMsg('user', 'Show me key vocabulary');
+      showTyping(); await wait(600); hideTyping();
+      await addMsg('ai', `Important words for this situation:<span class="guj">આ પરિસ્થિતિ માટેના મહત્વના શબ્દો:</span>`);
+      const vocabs = [
+        { word:"Prospective", guj:"સંભવિત", ph:"/prəˈspek.tɪv/", usage:"She is the prospective bride.", wrong:"PROS-pec-tive", correct:"pruh-SPEK-tiv" },
+        { word:"Humble", guj:"નમ્ર", ph:"/ˈhʌm.bəl/", usage:"We come from a humble family.", wrong:"HUM-blay", correct:"HUM-bul" },
+        { word:"Delighted", guj:"ખુશ", ph:"/dɪˈlaɪ.tɪd/", usage:"We are delighted to meet you.", wrong:"DEE-lighted", correct:"dih-LY-tid" },
+        { word:"Cordial", guj:"મૈત્રીપૂર્ણ", ph:"/ˈkɔːr.dʒəl/", usage:"The welcome was very cordial.", wrong:"COR-dee-al", correct:"COR-jul" },
+      ];
+      for(let i=0; i<vocabs.length; i++) {
+        const v = vocabs[i];
+        const vidx = storePron(v.word + '. ' + v.usage, v.ph, v.correct);
+        await addRaw(`<div class="vocab-card">
+          <div class="vocab-word">${v.word}</div>
+          <div class="vocab-phonetic">${v.ph}</div>
+          <div class="vocab-meaning-label">Meaning in Gujarati</div>
+          <div class="vocab-meaning">${v.guj}</div>
+          <div class="vocab-usage">"${v.usage}"</div>
+          <div class="vocab-mistake">
+            <div class="wrong">Common mistake: "${v.wrong}"</div>
+            <div class="correct">Correct: "${v.correct}" ${ICONS.play}</div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <button class="listen-btn" onclick="speakSlow(pronData[${vidx}].text)">${ICONS.play} Listen</button>
+            <button class="listen-btn" style="background:rgba(255,255,255,0.25)" onclick="simulateVocabMicFeedback(this,pronData[${vidx}].text,pronData[${vidx}].tip)">${ICONS.mic} Try it</button>
+          </div>
+        </div>`, i === 0 ? 0 : 200);
+      }
+      await addRaw(`<div class="chips" style="margin-top:12px;">
+        <span class="chip" onclick="goToState('j1_bride_milestone')">Finish lesson</span>
+        <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
+      </div>`, 200);
+      break;
+
+    case 'j1_bride_milestone':
+      await addMsg('user', 'Finish lesson');
+      showTyping(); await wait(800); hideTyping();
+      await addRaw(`<div class="milestone-card">
+        <div class="milestone-icon">${ICONS.star}</div>
+        <div class="milestone-title">Lesson Complete!</div>
+        <div class="milestone-sub">તમે અદ્ભુત કામ કર્યું છે!</div>
+        <div class="milestone-plan">
+          <div style="font-size:11px;font-weight:700;opacity:0.6;text-transform:uppercase;margin-bottom:8px;">Next Steps / લર્નિંગ પ્લાન</div>
+          <div class="milestone-plan-item"><div class="milestone-plan-num">1</div> કામની મીટિંગની પ્રેક્ટિસ (Work Meeting)</div>
+          <div class="milestone-plan-item"><div class="milestone-plan-num">2</div> નવા મુસાફરીના શબ્દો (Travel Words)</div>
+        </div>
+      </div>`, 0);
+      await addRaw(`<div class="chips" style="margin-top:12px;">
+        <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
+        <span class="chip" onclick="goToState('j1_situations')">Try another situation</span>
+      </div>`, 300);
+      break;
+
+    // ========== JOURNEY 2: LEARN VOCAB ==========
+    case 'j2_topic':
+      await addMsg('ai', `What topic do you want to learn words for?<span class="guj">કયા વિષય માટે શબ્દો શીખવા છે?</span>`);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="selectVocabTopic('Mumbai trip')">Mumbai trip</span>
+        <span class="chip" onclick="selectVocabTopic('Office meeting')">Office meeting</span>
+        <span class="chip" onclick="selectVocabTopic('Hospital visit')">Hospital visit</span>
+        <span class="chip" onclick="selectVocabTopic('Restaurant')">Restaurant</span>
+      </div>`, 200);
+      break;
+
+    case 'j2_vocab_cards':
+      showTyping(); await wait(800); hideTyping();
+      await addMsg('ai', `Here are essential words for your Mumbai trip:<span class="guj">"Mumbai trip" માટેના જરૂરી શબ્દો:</span>`);
+      const tripVocab = [
+        { word:"Reservation", guj:"આરક્ષણ", ph:"/ˌrez.əˈveɪ.ʃən/", usage:"I have a reservation for the 10 PM train.", wrong:"Re-ZERR-va-shun", correct:"Re-zer-VAY-shun" },
+        { word:"Platform", guj:"પ્લેટફોર્મ", ph:"/ˈplæt.fɔːrm/", usage:"Which platform does the train arrive on?", wrong:"PLAT-foorm", correct:"PLAT-form" },
+        { word:"Departure", guj:"પ્રસ્થાન", ph:"/dɪˈpɑːr.tʃər/", usage:"What is the departure time?", wrong:"Dee-PAR-ture", correct:"Dih-PAR-chur" },
+        { word:"Transit", guj:"પરિવહન", ph:"/ˈtræn.zɪt/", usage:"We are in transit to Mumbai.", wrong:"TRAN-seet", correct:"TRAN-zit" },
+        { word:"Lobby", guj:"લોબી / હોલ", ph:"/ˈlɒb.i/", usage:"Wait for me in the station lobby.", wrong:"Lo-BEE", correct:"LOB-ee" },
+      ];
+      for(let i=0; i<tripVocab.length; i++) {
+        const v = tripVocab[i];
+        const tidx = storePron(v.word + '. ' + v.usage, v.ph, v.correct);
+        await addRaw(`<div class="vocab-card" style="background:${i%2===0?'var(--primary)':'var(--primary-dark)'}">
+          <div class="vocab-word">${v.word}</div>
+          <div class="vocab-phonetic">${v.ph}</div>
+          <div class="vocab-meaning-label">Meaning in Gujarati</div>
+          <div class="vocab-meaning">${v.guj}</div>
+          <div class="vocab-usage">"${v.usage}"</div>
+          <div class="vocab-mistake">
+            <div class="wrong">Common mistake: "${v.wrong}"</div>
+            <div class="correct">Correct: "${v.correct}" ${ICONS.play}</div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <button class="listen-btn" onclick="speakSlow(pronData[${tidx}].text)">${ICONS.play} Listen</button>
+            <button class="listen-btn" style="background:rgba(255,255,255,0.25)" onclick="simulateVocabMicFeedback(this,pronData[${tidx}].text,pronData[${tidx}].tip)">${ICONS.mic} Try it</button>
+          </div>
+        </div>`, i === 0 ? 0 : 250);
+      }
+      await addRaw(`<div class="chips" style="margin-top:12px;">
+        <span class="chip" onclick="goToState('j2_practice_sentence')">Practice in a sentence</span>
+        <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
+      </div>`, 200);
+      break;
+
+    case 'j2_practice_sentence':
+      await addMsg('user', 'Practice in a sentence');
+      showTyping(); await wait(700); hideTyping();
+      await addMsg('ai', `Try saying this sentence using the words you learned:<br><br><strong>"I have a reservation. Which platform is the departure from?"</strong><span class="guj">"મારું આરક્ષણ છે. પ્રસ્થાન કયા પ્લેટફોર્મ પરથી છે?"</span>`);
+      await addRaw(`<div class="pron-popover" style="border-left-color:var(--primary)">
+        <div class="pron-label">Full Pronunciation Guide</div>
+        <div class="pron-ipa">/aɪ hæv ə ˌrez.əˈveɪ.ʃən. wɪtʃ ˈplæt.fɔːrm ɪz ðə dɪˈpɑːr.tʃər frɒm/</div>
+        <div class="pron-tip">Key stresses: re-zer-VAY-shun, PLAT-form, dih-PAR-chur. Connect "which platform" smoothly.</div>
+      </div>`, 300);
+      await addRaw(`<div class="mic-area">
+        <button class="mic-btn-large" onclick="simulateVocabRecording()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+        </button>
+        <div class="mic-label">Tap to try speaking</div>
+      </div>`, 200);
+      break;
+
+    case 'j2_vocab_feedback':
+      await addMsg('user', 'I have a rezervation. Which platfom is the departure from?');
+      showTyping(); await wait(800); hideTyping();
+      await addRaw(`<div class="correction-card">
+        <div class="correction-header">${ICONS.success}<span>Almost perfect!</span></div>
+        <div class="grammar-box">
+          <div class="grammar-label">${ICONS.warning} Pronunciation Fix</div>
+          <div class="grammar-text">
+            <strong>"Rezervation"</strong> — The 's' sound should be softer: re-zer-<strong>VAY</strong>-shun, not re-zer-VA-shun.<br><br>
+            <strong>"Platfom"</strong> — Don't drop the 'r': <strong>PLAT-form</strong>, make sure 'form' is complete.
+          </div>
+        </div>
+        ${listenBtn("I have a reservation. Which platform is the departure from?")}
+      </div>`, 0);
+      await addRaw(`<div class="chips" style="margin-top:12px;">
+        <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
+        <span class="chip" onclick="goToState('j2_topic')">Learn more words</span>
+      </div>`, 200);
+      break;
+
+    // ========== JOURNEY 3: AI COMPANION ==========
+    case 'j3_companions':
+      await addMsg('ai', `Choose who you'd like to practice English with:<span class="guj">કોની સાથે English પ્રેક્ટિસ કરવી છે?</span>`);
+      await addRaw(`<div class="card-grid">
+        <div class="companion-card" onclick="selectCompanion('Sarah')">
+          <div class="companion-avatar" style="background:linear-gradient(135deg,var(--primary-light),var(--primary))">&#128105;&#8205;&#127979;</div>
+          <h4>Sarah</h4>
+          <div class="comp-type">AI Teacher / શિક્ષક</div>
+          <div class="comp-sub">Business Prep</div>
+        </div>
+        <div class="companion-card" onclick="showNotReady()">
+          <div class="companion-avatar" style="background:var(--error)">&#128378;</div>
+          <h4>Alex</h4>
+          <div class="comp-type">AI Friend / મિત્ર</div>
+          <div class="comp-sub">Casual English</div>
+        </div>
+        <div class="companion-card" onclick="showNotReady()">
+          <div class="companion-avatar" style="background:var(--sparkle)">&#129305;</div>
+          <h4>Jake</h4>
+          <div class="comp-type">AI Buddy / દોસ્ત</div>
+          <div class="comp-sub">Slang & Fun</div>
+        </div>
+      </div>`, 300);
+      break;
+
+    case 'j3_sarah_intro':
+      showTyping(); await wait(900); hideTyping();
+      await addRaw(`<div class="sarah-msg">
+        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
+        <div class="bubble bubble-ai" style="flex:1;">
+          <strong>Sarah:</strong> Hi there! I'm Sarah, your Business English coach. Let's pretend we're meeting at a conference. How would you introduce yourself?
+          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--sparkle)">
+            <div class="pron-label">Hint</div>
+            <div class="pron-tip">Try: "Hello, I'm [name]. I work at [company] in [city]."<br>Key pronunciation: in-tro-DUCE your-SELF</div>
+          </div>
+        </div>
+      </div>`, 0);
+      await addRaw(`<div class="mic-area">
+        <button class="mic-btn-large" onclick="simulateSarahConvo1()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+        </button>
+        <div class="mic-label">Speak your introduction</div>
+      </div>`, 200);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="simulateSarahConvo1()">Simulate my response</span>
+      </div>`, 100);
+      // Sarah speaks her intro
+      setTimeout(() => speak("Hi there! I'm Sarah, your Business English coach. Let's pretend we're meeting at a conference. How would you introduce yourself?"), 500);
+      break;
+
+    case 'j3_sarah_round1':
+      await addMsg('user', 'Hello, I am Rahul. I am working in IT company in Ahmedabad.');
+      showTyping(); await wait(1200); hideTyping();
+      await addRaw(`<div class="sarah-msg">
+        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
+        <div class="bubble bubble-ai" style="flex:1;">
+          <strong>Sarah:</strong> Good start, Rahul! Small tip:<br><br>
+          Instead of <em>"I am working in IT company"</em>, try:<br>
+          <strong>"I work at an IT company in Ahmedabad."</strong>
+          <button class="listen-btn" onclick="speakSlow('I work at an IT company in Ahmedabad.')" style="margin:6px 0;">${ICONS.play} Listen</button>
+          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--sparkle)">
+            <div class="pron-label">Pronunciation Guide</div>
+            <div class="pron-ipa">/aɪ wɜːk ət ən aɪ.tiː ˈkʌm.pə.ni ɪn ˈɑː.mə.dɑː.bæd/</div>
+            <div class="pron-tip">"Work AT" not "work IN". Use "an" before vowel sounds. Present simple for permanent jobs, not continuous.</div>
+          </div>
+          <br>What does your company do? Tell me about it.
+        </div>
+      </div>`, 0);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="simulateSarahConvo2()">Continue conversation</span>
+      </div>`, 200);
+      // Sarah speaks her correction aloud
+      setTimeout(() => speak("Good start, Rahul! Small tip. Instead of 'I am working in IT company', try: I work at an IT company in Ahmedabad. What does your company do? Tell me about it."), 600);
+      break;
+
+    case 'j3_sarah_round2':
+      await addMsg('user', 'We are making software for hospitals. It is very good company, 200 peoples working.');
+      showTyping(); await wait(1200); hideTyping();
+      await addRaw(`<div class="sarah-msg">
+        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
+        <div class="bubble bubble-ai" style="flex:1;">
+          <strong>Sarah:</strong> Healthcare software, that's impressive! A few corrections:<br><br>
+          <strong>"We develop software for hospitals."</strong> ("develop" sounds more professional than "make")<br>
+          <button class="listen-btn" onclick="speakSlow('We develop software for hospitals.')" style="margin:4px 0;">${ICONS.play} Listen</button><br>
+          <strong>"It's a great company with 200 employees."</strong>
+          <button class="listen-btn" onclick="speakSlow('It\\'s a great company with 200 employees.')" style="margin:4px 0;">${ICONS.play} Listen</button>
+          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--secondary)">
+            <div class="pron-label">Key Fixes</div>
+            <div class="pron-ipa">/dɪˈvel.əp/ not "making" — more professional</div>
+            <div class="pron-tip"><strong>"People"</strong> is already plural — never say "peoples". <strong>"Employees"</strong> /ɪmˈplɔɪ.iːz/ is better than "people working" in business context.</div>
+          </div>
+          <br>That sounds like meaningful work! If I asked you at a conference, "What sets your company apart?" — how would you answer?
+        </div>
+      </div>`, 0);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="simulateSarahConvo3()">Continue conversation</span>
+      </div>`, 200);
+      // Sarah speaks her correction aloud
+      setTimeout(() => speak("Healthcare software, that's impressive! A few corrections. We develop software for hospitals. Develop sounds more professional than make. It's a great company with 200 employees. That sounds like meaningful work! If I asked you at a conference, what sets your company apart, how would you answer?"), 600);
+      break;
+
+    case 'j3_sarah_round3':
+      await addMsg('user', 'Our company is different because we are giving very fast service and our software is easy for using.');
+      showTyping(); await wait(1200); hideTyping();
+      await addRaw(`<div class="sarah-msg">
+        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
+        <div class="bubble bubble-ai" style="flex:1;">
+          <strong>Sarah:</strong> You're getting better, Rahul! Let me polish that:<br><br>
+          <strong>"What sets us apart is our fast service and user-friendly software."</strong>
+          <button class="listen-btn" onclick="speakSlow('What sets us apart is our fast service and user-friendly software.')" style="margin:6px 0;">${ICONS.play} Listen</button>
+          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--sparkle)">
+            <div class="pron-label">Pronunciation Guide</div>
+            <div class="pron-ipa">/wɒt sets ʌs əˈpɑːrt ɪz aʊər fɑːst ˈsɜːr.vɪs ænd ˈjuː.zər ˈfrend.li ˈsɒft.weər/</div>
+            <div class="pron-tip"><strong>"User-friendly"</strong> — a powerful business English word! /ˈjuː.zər ˈfrend.li/. Also: "easy to use" not "easy for using".</div>
+          </div>
+        </div>
+      </div>`, 0);
+      await wait(600);
+      await addRaw(`<div class="sarah-msg">
+        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
+        <div class="bubble bubble-ai" style="flex:1;">
+          <strong>Sarah:</strong> Great conversation, Rahul! Here's your practice summary:
+          <div style="background:rgba(0,0,0,0.04);border-radius:var(--radius-sm);padding:12px;margin-top:8px;">
+            <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:8px;">Session Summary</div>
+            <div style="font-size:13px;line-height:1.8;color:var(--grey-100);">
+              ${ICONS.success} <strong>"I work at"</strong> instead of "I am working in"<br>
+              ${ICONS.success} <strong>"We develop"</strong> instead of "We are making"<br>
+              ${ICONS.success} <strong>"200 employees"</strong> not "200 peoples"<br>
+              ${ICONS.success} <strong>"User-friendly"</strong> instead of "easy for using"<br>
+              ${ICONS.success} <strong>"What sets us apart"</strong> — great business phrase
+            </div>
+          </div>
+        </div>
+      </div>`, 400);
+      await addRaw(`<div class="chips" style="margin-top:12px;">
+        <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
+        <span class="chip" onclick="goToState('j3_companions')">Practice with someone else</span>
+      </div>`, 200);
+      // Sarah speaks her final correction + summary
+      setTimeout(() => speak("You're getting better, Rahul! Let me polish that. What sets us apart is our fast service and user-friendly software. Great conversation! Here's your practice summary."), 600);
+      break;
+
+    // ========== BACK TO MENU ==========
+    case 'back_to_menu':
+      await addMsg('user', 'Back to menu');
+      showTyping(); await wait(500); hideTyping();
+      await addMsg('ai', `What would you like to do next?<span class="guj">હવે શું કરવું છે?</span>`);
+      await addRaw(`
+        <div class="entry-card" onclick="goToState('j1_situations')">
+          <div class="entry-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 12h-4a1 1 0 010-2h1v-3h-1a1 1 0 010-2h2a1 1 0 011 1v4h1a1 1 0 010 2z"/></svg></div>
+          <div><h4>Learn for a situation</h4><p>પરિસ્થિતિ માટે શીખો</p></div>
+        </div>
+        <div class="entry-card" onclick="goToState('j2_topic')">
+          <div class="entry-icon" style="background:var(--secondary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21.37 9.61a1.964 1.964 0 00-.58-.856 1.896 1.896 0 00-.94-.428l-4.235-.646-1.899-4.087a1.963 1.963 0 00-.702-.798 1.917 1.917 0 00-1.016-.295c-.361 0-.712.105-1.016.295a1.85 1.85 0 00-.703.798L8.38 7.68l-4.273.646c-.342.057-.674.2-.94.428a1.964 1.964 0 00-.58.855 1.91 1.91 0 00.447 1.901l3.124 3.213-.74 4.553c-.058.351-.01.712.123 1.036.133.323.36.608.655.817.313.238.703.37 1.102.38.332 0 .655-.076.95-.237l3.788-2.091 3.788 2.09c.285.162.618.248.95.238a1.9 1.9 0 001.101-.351c.285-.21.513-.485.655-.818.133-.323.181-.684.124-1.036l-.74-4.552 3.123-3.213c.228-.257.37-.58.437-.922a1.91 1.91 0 00-.104-1.008z"/></svg></div>
+          <div><h4>Learn vocab for a situation</h4><p>શબ્દભંડોળ વધારો</p></div>
+        </div>
+        <div class="entry-card" onclick="goToState('j3_companions')">
+          <div class="entry-icon" style="background:var(--sparkle)"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16 6a4 4 0 11-8 0 4 4 0 018 0zm4 10.5c0 3.038-3.582 5.5-8 5.5s-8-2.462-8-5.5S7.582 11 12 11s8 2.462 8 5.5z"/></svg></div>
+          <div><h4>Talk to an AI avatar</h4><p>AI સાથે વાત કરો</p></div>
+        </div>
+      `, 300);
+      break;
+  }
+}
+
+// === Event handlers ===
+function selectLanguage(lang) {
+  addMsg('user', lang).then(() => goToState('lang_selected'));
+}
+
+function selectVocabTopic(topic) {
+  addMsg('user', topic).then(() => goToState('j2_vocab_cards'));
+}
+
+function selectCompanion(name) {
+  addMsg('user', `I'll practice with ${name}`).then(() => goToState('j3_sarah_intro'));
+}
+
+function simulateRecording() {
+  const btn = event.currentTarget;
+  btn.classList.add('recording');
+  btn.parentElement.querySelector('.mic-label').textContent = 'Listening...';
+  setTimeout(() => {
+    btn.classList.remove('recording');
+    btn.parentElement.remove();
+    goToState('j1_bride_result');
+  }, 1500);
+}
+
+function simulateVocabRecording() {
+  const btn = event.currentTarget;
+  btn.classList.add('recording');
+  setTimeout(() => {
+    btn.classList.remove('recording');
+    btn.parentElement.remove();
+    goToState('j2_vocab_feedback');
+  }, 1500);
+}
+
+function simulateSarahConvo1() { goToState('j3_sarah_round1'); }
+function simulateSarahConvo2() { goToState('j3_sarah_round2'); }
+function simulateSarahConvo3() { goToState('j3_sarah_round3'); }
+
+// Simulate mic recording on phrase/greeting cards — shows visual feedback + speaks
+function simulateMicFeedback(btn) {
+  const card = btn.closest('.phrase-card, .greeting-card');
+  if (!card) return;
+  const text = card.querySelector('.phrase-en, .greeting-en')?.textContent || '';
+  btn.style.background = 'var(--error)';
+  btn.innerHTML = ICONS.mic;
+  setTimeout(() => {
+    btn.style.background = '';
+    // Show a success popover
+    document.querySelectorAll('.dynamic-popover').forEach(e => e.remove());
+    const pop = document.createElement('div');
+    pop.className = 'pron-popover dynamic-popover fade-in';
+    pop.style.borderLeftColor = 'var(--success)';
+    pop.innerHTML = `
+      <div class="pron-label" style="color:var(--success)">Good attempt!</div>
+      <div class="pron-tip">Listen carefully and try again:</div>
+    `;
+    card.appendChild(pop);
+    scrollToBottom();
+    // Speak the correct version
+    speakSlow(text);
+  }, 1200);
+}
+
+// Simulate mic on vocab cards — speaks the word slowly
+function simulateVocabMicFeedback(btn, word, correctPron) {
+  btn.style.background = 'rgba(250,47,64,0.4)';
+  btn.innerHTML = ICONS.mic + ' Recording...';
+  setTimeout(() => {
+    btn.style.background = 'rgba(255,255,255,0.25)';
+    btn.innerHTML = ICONS.mic + ' Try it';
+    // Speak the correct pronunciation
+    speakSlow(word);
+  }, 1200);
+}
+
+// Data store for pronunciation popovers (avoids escaping issues in onclick)
+const pronData = [];
+function storePron(text, ipa, tip) {
+  const idx = pronData.length;
+  pronData.push({ text, ipa, tip });
+  return idx;
+}
+
+function showPronById(el, idx) {
+  const d = pronData[idx];
+  showPronPopover(el, d.text, d.ipa, d.tip);
+}
+
+function showPronPopover(el, text, ipa, tip) {
+  // Remove existing popovers
+  document.querySelectorAll('.dynamic-popover').forEach(e => e.remove());
+  const pop = document.createElement('div');
+  pop.className = 'pron-popover dynamic-popover fade-in';
+  pop.style.borderLeftColor = 'var(--secondary)';
+  pop.innerHTML = `
+    <div class="pron-label">Pronunciation: ${text}</div>
+    <div class="pron-ipa">${ipa}</div>
+    <div class="pron-tip">${tip}</div>
+  `;
+  el.closest('.phrase-card, .greeting-card, .correction-card, .vocab-card, .msg')?.appendChild(pop);
+  scrollToBottom();
+  // Speak the text aloud
+  speakSlow(text);
+}
+
+function showNotReady() {
+  addMsg('ai', `This situation is coming soon! Try "Meeting Bride" for the full experience.<span class="guj">આ પરિસ્થિતિ ટૂંક સમયમાં આવશે! "Meeting Bride" અજમાવો.</span>`);
+}
+
+function handleMicClick() {
+  // Show a hint
+  addMsg('ai', 'Tap the suggested prompts or the mic button inside the conversation to continue.');
+}
+
+function handleSend() {
+  const input = document.getElementById('inputField');
+  if (input.value.trim()) {
+    addMsg('user', input.value).then(() => {
+      input.value = '';
+    });
+  }
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// === Init ===
+goToState('welcome');
+</script>
+</body>
+</html>
