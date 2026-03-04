@@ -688,6 +688,9 @@ function goToStep(n) {
     }
   }
 
+  // Enable generate button if form is pre-filled
+  if (n === 4) updateCreateBtn();
+
   // Run quality check animation when arriving at step 5
   if (n === 5 && !qualityDone) {
     runQualityCheck();
