@@ -110,29 +110,168 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 /* Progress bar */
 .progress-bar-container {
   background: var(--grey-40); border-radius: var(--radius-pill); height: 6px;
-  width: 100%; margin-top: 8px; overflow: hidden;
+  width: 100%; overflow: hidden;
 }
 .progress-bar-fill {
   height: 100%; background: var(--primary); border-radius: var(--radius-pill);
   transition: width 0.5s ease;
 }
 
-/* Concept card */
-.concept-card {
-  background: var(--grey-100); border-radius: var(--radius-lg); overflow: hidden;
-  color: var(--white); margin-top: 8px;
+/* === Step Carousel === */
+.step-carousel {
+  background: var(--white); border: 1.5px solid var(--grey-40); border-radius: var(--radius-lg);
+  margin-top: 8px; overflow: hidden;
 }
-.concept-card-img {
-  width: 100%; height: 140px; object-fit: cover; display: block; opacity: 0.8;
+.step-carousel-header {
+  padding: 12px 16px 8px;
 }
-.concept-card-body { padding: 16px; }
-.concept-card-tag {
+.step-carousel-header .step-meta {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+}
+.step-carousel-header .step-label {
+  font-size: 10px; font-weight: 700; color: var(--grey-60); text-transform: uppercase; letter-spacing: 1px;
+}
+.step-carousel-header .step-tag {
+  display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
+  background: var(--primary-light); color: var(--primary); font-size: 10px; font-weight: 700;
+}
+
+.step-panels { position: relative; }
+.step-panel { display: none; animation: fadeSlide 0.3s ease-out; }
+.step-panel.active { display: block; }
+
+.step-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 14px; border-top: 1px solid var(--grey-40); margin-top: 4px;
+}
+.step-nav-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--grey-40);
+  background: var(--white); font-size: 18px; font-weight: 700; color: var(--grey-100);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.step-nav-btn:hover { background: var(--surface-ghost); }
+.step-nav-btn:disabled { opacity: 0.25; cursor: default; }
+.step-nav-btn:disabled:hover { background: var(--white); }
+
+.step-dots { display: flex; gap: 6px; }
+.step-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--grey-40); transition: all 0.3s;
+}
+.step-dot.active { background: var(--primary); width: 20px; border-radius: 4px; }
+.step-dot.done { background: var(--success); }
+
+@keyframes fadeSlide { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+
+/* Concept card inside carousel */
+.carousel-concept {
+  background: var(--grey-100); color: var(--white); overflow: hidden;
+}
+.carousel-concept img {
+  width: 100%; height: 120px; object-fit: cover; display: block; opacity: 0.8;
+}
+.carousel-concept-body { padding: 14px 16px; }
+.carousel-concept-tag {
   display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
   background: var(--primary); color: var(--white); font-size: 10px;
-  font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
 }
-.concept-card h4 { font-size: 18px; font-weight: 900; margin-bottom: 6px; }
-.concept-card p { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+.carousel-concept h4 { font-size: 16px; font-weight: 900; margin-bottom: 4px; }
+.carousel-concept p { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+
+/* Compare inside carousel */
+.carousel-compare { padding: 14px 16px; }
+.carousel-compare h4 { font-size: 15px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
+.carousel-compare .compare-sub { font-size: 11px; color: var(--grey-60); margin-bottom: 12px; }
+.compare-item { margin-bottom: 12px; }
+.compare-label {
+  display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+}
+.compare-label.bad { background: rgba(250,47,64,0.1); color: var(--error); }
+.compare-label.good { background: rgba(37,171,33,0.1); color: var(--success); }
+.compare-img {
+  width: 100%; height: 90px; object-fit: cover; border-radius: var(--radius-md); display: block;
+}
+.compare-item.bad .compare-img { opacity: 0.6; border: 2px solid rgba(250,47,64,0.3); }
+.compare-item.good .compare-img { border: 2px solid var(--success); }
+.compare-reason {
+  display: flex; align-items: flex-start; gap: 6px; margin-top: 4px; font-size: 11px;
+}
+.compare-reason.bad { color: var(--error); }
+.compare-reason.good { color: var(--success); font-weight: 700; }
+
+/* Create form inside carousel */
+.carousel-create { padding: 14px 16px; }
+.carousel-create h4 { font-size: 15px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
+.carousel-create .create-sub { font-size: 11px; color: var(--grey-60); margin-bottom: 12px; }
+.create-label { font-size: 10px; font-weight: 700; color: var(--grey-60); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.create-input {
+  width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1.5px solid var(--grey-40);
+  font-family: 'JioType'; font-size: 13px; color: var(--grey-100); background: var(--surface-ghost);
+  outline: none; transition: border-color 0.2s; margin-bottom: 10px;
+}
+.create-input:focus { border-color: var(--primary); }
+.create-input::placeholder { color: var(--grey-60); }
+.create-select {
+  width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1.5px solid var(--grey-40);
+  font-family: 'JioType'; font-size: 13px; color: var(--grey-100); background: var(--surface-ghost);
+  outline: none; margin-bottom: 10px; -webkit-appearance: none;
+}
+.create-row { display: flex; gap: 8px; }
+.create-row > div { flex: 1; }
+.create-btn {
+  width: 100%; padding: 11px; border-radius: var(--radius-xl); border: none;
+  background: var(--primary); color: var(--white); font-family: 'JioType';
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.create-btn:active { transform: scale(0.98); }
+.create-btn:disabled { background: var(--grey-40); color: var(--grey-60); cursor: default; }
+
+/* Result inside carousel */
+.carousel-result { position: relative; }
+.carousel-result img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.carousel-result .result-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(transparent 40%, rgba(0,0,0,0.75));
+  display: flex; align-items: flex-end; padding: 16px;
+}
+.carousel-result .result-overlay h3 {
+  font-size: 20px; font-weight: 900; color: var(--white); text-transform: uppercase;
+  font-style: italic; letter-spacing: -0.5px; line-height: 1.1;
+}
+.share-actions {
+  display: flex; gap: 8px; padding: 12px 16px;
+}
+.share-btn {
+  flex: 1; padding: 10px; border-radius: var(--radius-md); border: 1.5px solid var(--grey-40);
+  background: var(--white); font-family: 'JioType'; font-size: 12px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all 0.2s; color: var(--grey-100);
+}
+.share-btn:hover { background: var(--surface-ghost); }
+.share-btn.whatsapp { border-color: #25D366; color: #25D366; }
+.share-btn.whatsapp:hover { background: rgba(37,211,102,0.08); }
+.share-btn.download { border-color: var(--primary); color: var(--primary); }
+.share-btn.download:hover { background: var(--primary-light); }
+
+/* Quality check inside carousel */
+.carousel-quality { padding: 14px 16px; }
+.carousel-quality h4 { font-size: 15px; font-weight: 900; color: var(--grey-100); margin-bottom: 10px; }
+.quality-check {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; background: var(--surface-ghost); border-radius: var(--radius-md);
+  margin-bottom: 6px; font-size: 12px; font-weight: 500; color: var(--grey-80);
+}
+.quality-check .qc-status { display: flex; align-items: center; }
+.quality-check .qc-status.pending { color: var(--grey-60); }
+.quality-check .qc-status.pass { color: var(--success); }
+.quality-result {
+  margin-top: 10px; padding: 10px; border-radius: var(--radius-md);
+  background: rgba(37,171,33,0.08); border: 1px solid rgba(37,171,33,0.2);
+  text-align: center; font-size: 12px; font-weight: 700; color: var(--success);
+}
 
 /* Roadmap card */
 .roadmap-card {
@@ -163,98 +302,20 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 .roadmap-step.active .roadmap-step-icon { color: var(--white); }
 .roadmap-step.locked .roadmap-step-icon { color: var(--grey-60); }
 
-/* Compare card */
-.compare-card {
-  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
-  padding: 16px; margin-top: 8px;
+/* Concept card (for CTR explanation) */
+.concept-card {
+  background: var(--grey-100); border-radius: var(--radius-lg); overflow: hidden;
+  color: var(--white); margin-top: 8px;
 }
-.compare-card h4 { font-size: 16px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
-.compare-card .compare-sub { font-size: 12px; color: var(--grey-60); margin-bottom: 16px; }
-.compare-item { margin-bottom: 16px; }
-.compare-label {
+.concept-card-img { width: 100%; height: 140px; object-fit: cover; display: block; opacity: 0.8; }
+.concept-card-body { padding: 16px; }
+.concept-card-tag {
   display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
-  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-  margin-bottom: 6px;
+  background: var(--primary); color: var(--white); font-size: 10px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
 }
-.compare-label.bad { background: rgba(250,47,64,0.1); color: var(--error); }
-.compare-label.good { background: rgba(37,171,33,0.1); color: var(--success); }
-.compare-img {
-  width: 100%; height: 100px; object-fit: cover; border-radius: var(--radius-md);
-  display: block;
-}
-.compare-item.bad .compare-img { opacity: 0.6; border: 2px solid rgba(250,47,64,0.3); }
-.compare-item.good .compare-img { border: 2px solid var(--success); }
-.compare-reason {
-  display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; font-size: 12px;
-}
-.compare-reason.bad { color: var(--error); }
-.compare-reason.good { color: var(--success); font-weight: 700; }
-
-/* Create form card */
-.create-card {
-  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
-  padding: 16px; margin-top: 8px;
-}
-.create-card h4 { font-size: 16px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
-.create-card .create-sub { font-size: 12px; color: var(--grey-60); margin-bottom: 16px; }
-.create-label { font-size: 10px; font-weight: 700; color: var(--grey-60); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-.create-input {
-  width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1.5px solid var(--grey-40);
-  font-family: 'JioType'; font-size: 14px; color: var(--grey-100); background: var(--surface-ghost);
-  outline: none; transition: border-color 0.2s; margin-bottom: 12px;
-}
-.create-input:focus { border-color: var(--primary); }
-.create-input::placeholder { color: var(--grey-60); }
-.create-select {
-  width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1.5px solid var(--grey-40);
-  font-family: 'JioType'; font-size: 14px; color: var(--grey-100); background: var(--surface-ghost);
-  outline: none; margin-bottom: 12px; -webkit-appearance: none;
-}
-.create-row { display: flex; gap: 8px; }
-.create-row > div { flex: 1; }
-.create-btn {
-  width: 100%; padding: 12px; border-radius: var(--radius-xl); border: none;
-  background: var(--primary); color: var(--white); font-family: 'JioType';
-  font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.create-btn:active { transform: scale(0.98); }
-.create-btn:disabled { background: var(--grey-40); color: var(--grey-60); cursor: default; }
-
-/* Result card */
-.result-card {
-  border-radius: var(--radius-lg); overflow: hidden; margin-top: 8px;
-  position: relative;
-}
-.result-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
-.result-overlay {
-  position: absolute; bottom: 0; left: 0; right: 0; padding: 20px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.8));
-}
-.result-overlay h3 {
-  font-size: 22px; font-weight: 900; color: var(--white); text-transform: uppercase;
-  font-style: italic; letter-spacing: -0.5px; line-height: 1.1;
-}
-
-/* Quality check card */
-.quality-card {
-  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
-  padding: 16px; margin-top: 8px;
-}
-.quality-card h4 { font-size: 16px; font-weight: 900; color: var(--grey-100); margin-bottom: 12px; }
-.quality-check {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 12px; background: var(--surface-ghost); border-radius: var(--radius-md);
-  margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--grey-80);
-}
-.quality-check .qc-status { display: flex; align-items: center; }
-.quality-check .qc-status.pending { color: var(--grey-60); }
-.quality-check .qc-status.pass { color: var(--success); }
-.quality-result {
-  margin-top: 12px; padding: 12px; border-radius: var(--radius-md);
-  background: rgba(37,171,33,0.08); border: 1px solid rgba(37,171,33,0.2);
-  text-align: center; font-size: 13px; font-weight: 700; color: var(--success);
-}
+.concept-card h4 { font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+.concept-card p { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
 
 /* Anchor card */
 .anchor-card {
@@ -290,7 +351,6 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 }
 .complete-card h3 { font-size: 22px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
 .complete-card .complete-sub { font-size: 13px; color: var(--grey-60); margin-bottom: 20px; }
-
 .plan-card {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   border-radius: var(--radius-lg); padding: 20px; color: var(--white); text-align: left;
@@ -364,7 +424,6 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 
 /* Animations */
 @keyframes msgIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(250,47,64,0.4); } 50% { box-shadow: 0 0 0 16px rgba(250,47,64,0); } }
 @keyframes typingAnim { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes spinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -394,15 +453,13 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
   </div>
 
   <div class="chat-body">
-    <div class="chat-area" id="chatArea">
-      <!-- Messages rendered by JS -->
-    </div>
+    <div class="chat-area" id="chatArea"></div>
     <div class="input-bar">
-      <button class="mic-input-btn" onclick="handleMicClick()">
+      <button class="mic-input-btn">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
       </button>
-      <input class="input-field" id="inputField" placeholder="Type karo..." readonly />
-      <button class="send-btn" onclick="handleSend()">
+      <input class="input-field" placeholder="Type karo..." readonly />
+      <button class="send-btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19.79 10.16l-14-6A2 2 0 005 4a2 2 0 00-1.965 2.398 2 2 0 00.355.792L6.76 12l-3.35 4.79a2 2 0 002.38 3.05l14-6a2 2 0 000-3.68z"/></svg>
       </button>
     </div>
@@ -412,29 +469,60 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 </div>
 
 <script>
-// === SVG Icon helpers ===
+// === SVG Icons ===
 const ICONS = {
-  mic: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>',
   check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5.21 7.71l-6 6a1.002 1.002 0 01-1.42 0l-3-3a1.003 1.003 0 111.42-1.42l2.29 2.3 5.29-5.3a1.004 1.004 0 011.42 1.42z"/></svg>',
-  warning: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 4.5a1 1 0 012 0v6a1 1 0 01-2 0v-6zm1 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>',
   play: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.15 10.36l-10-7A2 2 0 008 3a1.88 1.88 0 00-.92.23A2 2 0 006 5v14a2 2 0 001.08 1.77c.282.154.599.233.92.23a2 2 0 001.15-.36l10-7a2 2 0 000-3.28z"/></svg>',
   close: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3 5.71a1 1 0 00-1.42 0L12 10.59 7.12 5.71a1 1 0 10-1.42 1.42L10.59 12l-4.89 4.88a1 1 0 001.42 1.42L12 13.41l4.88 4.89a1 1 0 001.42-1.42L13.41 12l4.89-4.88a1 1 0 000-1.41z"/></svg>',
   lock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>',
   brain: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.22.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
   star: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
   eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>',
-  chart: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>',
   wand: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.996.996 0 00-1.41 0L1.29 18.96a.996.996 0 000 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.71 11.04a.996.996 0 000-1.41l-2.34-2.34zM5.71 20.59L3.41 18.3 10 11.71l2.3 2.3-6.59 6.58z"/></svg>',
   notify: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
-  calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/></svg>',
   spinner: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="animation:spinAnim 1s linear infinite"><path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z"/></svg>',
+  whatsapp: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>',
+  download: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>',
+  arrowLeft: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>',
+  arrowRight: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
 };
 
-// === Sarvam AI TTS ===
+// === Sarvam AI TTS with pre-caching ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 let ttsAudio = null;
-let ttsCache = {};
+const ttsCache = {};
+
+const TTS_TEXTS = {
+  ctr: 'Click-Through Rate matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein toh 5 percent CTR hai.',
+  hook: 'Hook woh ek element hai jo scroll rokta hai. Yeh usually ek face ya massive contrast hota hai. Bina hook ke design koi kaam nahi karega.',
+  prompting: 'AI ko ek structured formula chahiye. Subject plus Action ya Emotion. Jitna specific bologe utna achha result milega.',
+  anchor: 'Jab log scroll karte hain, unka dimaag 2 second mein decide karta hai ki click karna hai ya nahi. Ek achha thumbnail woh decision jeetata hai.'
+};
+
+// Pre-cache all TTS audio on page load
+async function preCacheTTS() {
+  for (const key of Object.keys(TTS_TEXTS)) {
+    try {
+      const res = await fetch(SARVAM_TTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
+        body: JSON.stringify({
+          inputs: [TTS_TEXTS[key]],
+          target_language_code: 'hi-IN',
+          speaker: 'priya',
+          model: 'bulbul:v3',
+          enable_preprocessing: true,
+          pace: 1.2
+        })
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.audios && data.audios[0]) ttsCache[TTS_TEXTS[key]] = data.audios[0];
+    } catch (e) { /* ignore pre-cache errors */ }
+  }
+}
+preCacheTTS();
 
 async function speakHindi(text) {
   stopTTS();
@@ -448,15 +536,15 @@ async function speakHindi(text) {
         target_language_code: 'hi-IN',
         speaker: 'priya',
         model: 'bulbul:v3',
-        enable_preprocessing: true
+        enable_preprocessing: true,
+        pace: 1.2
       })
     });
-    if (!res.ok) throw new Error('Sarvam API error: ' + res.status);
+    if (!res.ok) throw new Error('TTS error');
     const data = await res.json();
     const b64 = data.audios && data.audios[0];
     if (b64) { ttsCache[text] = b64; playBase64Audio(b64); }
   } catch (err) {
-    console.warn('Sarvam TTS failed, fallback:', err);
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'hi-IN'; utter.rate = 0.85;
     speechSynthesis.speak(utter);
@@ -465,7 +553,7 @@ async function speakHindi(text) {
 
 function playBase64Audio(base64) {
   ttsAudio = new Audio('data:audio/wav;base64,' + base64);
-  ttsAudio.play().catch(err => console.warn('Audio play failed:', err));
+  ttsAudio.play().catch(() => {});
 }
 
 function stopTTS() {
@@ -479,9 +567,16 @@ let currentState = 'welcome';
 let stateTransitioning = false;
 let createFormData = { subject: '', emotion: 'Shocked', text: '' };
 
+// === Step Carousel ===
+let currentStep = 1;
+let stepGenerated = false; // whether form was submitted in step 4
+let qualityDone = false;
+
+const STEP_TAGS = ['THUMBNAIL', 'PROMPTING', 'GOOD vs BAD', 'CREATE', 'QUALITY CHECK'];
+
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-function addMsg(type, html, delay=0) {
+function addMsg(type, html, delay = 0) {
   return new Promise(resolve => {
     setTimeout(() => {
       const div = document.createElement('div');
@@ -494,7 +589,7 @@ function addMsg(type, html, delay=0) {
   });
 }
 
-function addRaw(html, delay=0) {
+function addRaw(html, delay = 0) {
   return new Promise(resolve => {
     setTimeout(() => {
       const div = document.createElement('div');
@@ -515,52 +610,306 @@ function showTyping() {
   chatArea.appendChild(div);
   scrollToBottom();
 }
-
-function hideTyping() {
-  const el = document.getElementById('typing-indicator');
-  if (el) el.remove();
-}
+function hideTyping() { const el = document.getElementById('typing-indicator'); if (el) el.remove(); }
 
 function showSkeleton() {
   const div = document.createElement('div');
   div.className = 'msg msg-ai msg-full';
   div.id = 'skeleton-loader';
-  div.innerHTML = `<div style="padding:16px;background:var(--surface-ghost);border-radius:var(--radius-lg);">
-    <div class="skeleton skeleton-line" style="width:80%"></div>
-    <div class="skeleton skeleton-line" style="width:60%"></div>
-    <div class="skeleton skeleton-line" style="width:40%"></div>
-  </div>`;
+  div.innerHTML = `<div style="padding:16px;background:var(--surface-ghost);border-radius:var(--radius-lg);"><div class="skeleton skeleton-line" style="width:80%"></div><div class="skeleton skeleton-line" style="width:60%"></div><div class="skeleton skeleton-line" style="width:40%"></div></div>`;
   chatArea.appendChild(div);
   scrollToBottom();
 }
+function hideSkeleton() { const el = document.getElementById('skeleton-loader'); if (el) el.remove(); }
 
-function hideSkeleton() {
-  const el = document.getElementById('skeleton-loader');
-  if (el) el.remove();
-}
-
-function scrollToBottom() {
-  setTimeout(() => { chatArea.scrollTop = chatArea.scrollHeight; }, 50);
-}
-
-function handleMicClick() { /* placeholder */ }
-function handleSend() { /* placeholder */ }
+function scrollToBottom() { setTimeout(() => { chatArea.scrollTop = chatArea.scrollHeight; }, 50); }
 
 function disableChips() {
-  document.querySelectorAll('.chip').forEach(c => {
-    c.style.pointerEvents = 'none';
-    c.style.opacity = '0.38';
-  });
+  document.querySelectorAll('.chip').forEach(c => { c.style.pointerEvents = 'none'; c.style.opacity = '0.38'; });
 }
 
 function showComingSoon() {
-  // Briefly flash a message
   const el = document.createElement('div');
   el.className = 'msg msg-ai fade-in';
   el.innerHTML = `<div class="bubble bubble-ai" style="color:var(--grey-60);font-style:italic;">Yeh module jaldi aa raha hai!</div>`;
   chatArea.appendChild(el);
   scrollToBottom();
   setTimeout(() => el.remove(), 2000);
+}
+
+// === Carousel Functions ===
+function goToStep(n) {
+  if (n < 1 || n > 5) return;
+  // Can't go past step 4 until form is generated
+  if (n === 5 && !stepGenerated) return;
+
+  currentStep = n;
+
+  // Update panels
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.querySelector(`.step-panel[data-step="${n}"]`);
+  if (panel) panel.classList.add('active');
+
+  // Update header
+  const label = document.getElementById('stepLabel');
+  const tag = document.getElementById('stepTag');
+  const progress = document.getElementById('stepProgress');
+  if (label) label.textContent = `Step ${n} / 5`;
+  if (tag) tag.textContent = STEP_TAGS[n - 1];
+  if (progress) progress.style.width = (n * 20) + '%';
+
+  // Update dots
+  document.querySelectorAll('.step-dot').forEach((d, i) => {
+    d.classList.remove('active', 'done');
+    if (i + 1 === n) d.classList.add('active');
+    else if (i + 1 < n) d.classList.add('done');
+  });
+
+  // Update nav buttons
+  const prevBtn = document.getElementById('stepPrevBtn');
+  const nextBtn = document.getElementById('stepNextBtn');
+  if (prevBtn) prevBtn.disabled = (n === 1);
+  if (nextBtn) {
+    if (n === 5) {
+      nextBtn.disabled = true;
+    } else if (n === 4 && !stepGenerated) {
+      nextBtn.disabled = true;
+    } else {
+      nextBtn.disabled = false;
+    }
+  }
+
+  // Run quality check animation when arriving at step 5
+  if (n === 5 && !qualityDone) {
+    runQualityCheck();
+  }
+
+  scrollToBottom();
+}
+
+function nextStep() { goToStep(currentStep + 1); }
+function prevStep() { goToStep(currentStep - 1); }
+
+function updateCreateBtn() {
+  const subject = document.getElementById('createSubject');
+  const btn = document.getElementById('createGenBtn');
+  if (subject && btn) btn.disabled = !subject.value.trim();
+}
+
+function generateInCarousel() {
+  const subject = document.getElementById('createSubject');
+  const emotion = document.getElementById('createEmotion');
+  const text = document.getElementById('createText');
+  createFormData.subject = subject ? subject.value : '';
+  createFormData.emotion = emotion ? emotion.value : 'Shocked';
+  createFormData.text = text ? text.value : '';
+
+  const panel = document.querySelector('.step-panel[data-step="4"]');
+  if (!panel) return;
+
+  // Show generating state
+  panel.innerHTML = `<div style="padding:32px 16px;text-align:center;">
+    <div style="margin-bottom:12px;">${ICONS.spinner}</div>
+    <div style="font-size:13px;color:var(--grey-60);">Generating thumbnail...</div>
+  </div>`;
+
+  setTimeout(() => {
+    const overlayText = createFormData.text || 'WATCH THIS!';
+    panel.innerHTML = `
+      <div class="carousel-result">
+        <img src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?q=80&w=800&auto=format&fit=crop" alt="Generated Thumbnail" />
+        <div class="result-overlay">
+          <h3>${overlayText}</h3>
+        </div>
+      </div>
+      <div class="share-actions">
+        <button class="share-btn whatsapp" onclick="shareWhatsApp()">
+          ${ICONS.whatsapp} WhatsApp
+        </button>
+        <button class="share-btn download" onclick="downloadThumb()">
+          ${ICONS.download} Download
+        </button>
+      </div>
+    `;
+    stepGenerated = true;
+    // Enable next button
+    const nextBtn = document.getElementById('stepNextBtn');
+    if (nextBtn) nextBtn.disabled = false;
+    scrollToBottom();
+  }, 2000);
+}
+
+function shareWhatsApp() {
+  const text = 'Maine apna YouTube thumbnail banaya Skill Coach se! Check it out.';
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+
+function downloadThumb() {
+  const link = document.createElement('a');
+  link.href = 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?q=80&w=1280&auto=format&fit=crop';
+  link.download = 'my-thumbnail.jpg';
+  link.target = '_blank';
+  link.click();
+}
+
+async function runQualityCheck() {
+  await wait(1200);
+  const s1 = document.getElementById('qc1-status');
+  if (s1) { s1.className = 'qc-status pass'; s1.innerHTML = ICONS.check; s1.style.color = 'var(--success)'; }
+
+  await wait(1000);
+  const s2 = document.getElementById('qc2-status');
+  if (s2) { s2.className = 'qc-status pass'; s2.innerHTML = ICONS.check; s2.style.color = 'var(--success)'; }
+
+  await wait(1000);
+  const s3 = document.getElementById('qc3-status');
+  if (s3) { s3.className = 'qc-status pass'; s3.innerHTML = ICONS.check; s3.style.color = 'var(--success)'; }
+
+  await wait(500);
+  const qCard = document.getElementById('qualityCardInner');
+  if (qCard) {
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'quality-result fade-in';
+    resultDiv.textContent = 'Yeh thumbnail clear, clickable, aur usable hai!';
+    qCard.appendChild(resultDiv);
+  }
+
+  qualityDone = true;
+
+  // Show "Continue" chip below carousel
+  await wait(300);
+  const chipsDiv = document.getElementById('postCarouselChips');
+  if (chipsDiv) {
+    chipsDiv.innerHTML = `<div class="chips"><span class="chip" onclick="goToState('yt_anchor')">Samajh gaya, aage badho</span></div>`;
+    chipsDiv.classList.remove('hidden');
+  }
+  scrollToBottom();
+}
+
+function renderCarousel() {
+  return `
+    <div class="step-carousel" id="stepCarousel">
+      <div class="step-carousel-header">
+        <div class="step-meta">
+          <span class="step-label" id="stepLabel">Step 1 / 5</span>
+          <span class="step-tag" id="stepTag">THUMBNAIL</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="stepProgress" style="width:20%"></div>
+        </div>
+      </div>
+
+      <div class="step-panels" id="stepPanels">
+        <!-- Step 1: Hook -->
+        <div class="step-panel active" data-step="1">
+          <div class="carousel-concept">
+            <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=600&auto=format&fit=crop" alt="Hook" />
+            <div class="carousel-concept-body">
+              <span class="carousel-concept-tag">Concept: The Hook</span>
+              <h4>Scroll Rokne Wala Element</h4>
+              <p>Hook woh ek element hai jo scroll rokta hai. Yeh usually ek face ya massive contrast hota hai. Bina hook ke, design koi kaam nahi karega.</p>
+              <div style="margin-top:10px;">
+                <button class="listen-btn listen-btn-dark" onclick="speakHindi(TTS_TEXTS.hook)">${ICONS.play} Suno Hindi mein</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Prompting -->
+        <div class="step-panel" data-step="2">
+          <div class="carousel-concept">
+            <img src="https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?q=80&w=600&auto=format&fit=crop" alt="Prompting" />
+            <div class="carousel-concept-body">
+              <span class="carousel-concept-tag">Concept: Prompting 101</span>
+              <h4>AI ko Kaise Bolo</h4>
+              <p>AI literal hai. Isko ek structured formula chahiye: <strong>[Subject] + [Action/Emotion]</strong>. Jitna specific, utna achha result.</p>
+              <div style="background:rgba(255,255,255,0.1);border-radius:var(--radius-sm);padding:8px 10px;margin-top:10px;border:1px solid rgba(255,255,255,0.1);">
+                <div style="font-size:10px;font-weight:700;color:var(--sparkle);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Example Prompt</div>
+                <div style="font-size:12px;color:var(--white);">"Stressed chef in kitchen, shocked expression, cinematic lighting"</div>
+              </div>
+              <div style="margin-top:10px;">
+                <button class="listen-btn listen-btn-dark" onclick="speakHindi(TTS_TEXTS.prompting)">${ICONS.play} Suno Hindi mein</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Good vs Bad -->
+        <div class="step-panel" data-step="3">
+          <div class="carousel-compare">
+            <h4>${ICONS.eye} Good vs. Bad Thumbnail</h4>
+            <div class="compare-sub">Pehchano ki kya achha kaam karta hai aur kya nahi</div>
+            <div class="compare-item bad">
+              <span class="compare-label bad">Bad Thumbnail</span>
+              <img class="compare-img" src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop" alt="Bad" />
+              <div class="compare-reason bad">${ICONS.close} <span>Boring, no face, no emotion — scroll past ho jaayega</span></div>
+            </div>
+            <div class="compare-item good">
+              <span class="compare-label good">Good Thumbnail</span>
+              <img class="compare-img" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&auto=format&fit=crop" alt="Good" />
+              <div class="compare-reason good">${ICONS.check} <span>Clear hook, big contrast, readable — click milega!</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Create -->
+        <div class="step-panel" data-step="4">
+          <div class="carousel-create" id="createFormCard">
+            <h4>${ICONS.wand} Guided Creation</h4>
+            <div class="create-sub">Apna idea frame karo. Ek bold version try karo.</div>
+            <div class="create-label">Subject (Kaun/Kya?)</div>
+            <input class="create-input" id="createSubject" type="text" placeholder="e.g. Stressed chef in kitchen" oninput="updateCreateBtn()" />
+            <div class="create-row">
+              <div>
+                <div class="create-label">Emotion</div>
+                <select class="create-select" id="createEmotion">
+                  <option value="Shocked">Shocked</option>
+                  <option value="Angry">Angry</option>
+                  <option value="Happy">Happy</option>
+                </select>
+              </div>
+              <div>
+                <div class="create-label">Vibe</div>
+                <select class="create-select" id="createVibe">
+                  <option value="Cinematic">Cinematic</option>
+                  <option value="Neon">Neon</option>
+                  <option value="Natural">Natural</option>
+                </select>
+              </div>
+            </div>
+            <div class="create-label">Overlay Text (Hook)</div>
+            <input class="create-input" id="createText" type="text" placeholder="e.g. SECRET REVEALED!" />
+            <button class="create-btn" id="createGenBtn" disabled onclick="generateInCarousel()">
+              ${ICONS.wand} Generate Karo
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 5: Quality Check -->
+        <div class="step-panel" data-step="5">
+          <div class="carousel-quality" id="qualityCardInner">
+            <h4>AI Quality Check</h4>
+            <div class="quality-check"><span>Hook 2 second mein clear?</span><span class="qc-status pending" id="qc1-status">${ICONS.spinner}</span></div>
+            <div class="quality-check"><span>Text mobile pe readable?</span><span class="qc-status pending" id="qc2-status">${ICONS.spinner}</span></div>
+            <div class="quality-check"><span>Video topic se match?</span><span class="qc-status pending" id="qc3-status">${ICONS.spinner}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-nav">
+        <button class="step-nav-btn" id="stepPrevBtn" onclick="prevStep()" disabled>${ICONS.arrowLeft}</button>
+        <div class="step-dots" id="stepDots">
+          <span class="step-dot active"></span>
+          <span class="step-dot"></span>
+          <span class="step-dot"></span>
+          <span class="step-dot"></span>
+          <span class="step-dot"></span>
+        </div>
+        <button class="step-nav-btn" id="stepNextBtn" onclick="nextStep()">${ICONS.arrowRight}</button>
+      </div>
+    </div>
+    <div id="postCarouselChips" class="hidden"></div>
+  `;
 }
 
 // === State transitions ===
@@ -582,8 +931,6 @@ async function goToState(state) {
         <span class="chip chip-disabled" onclick="showComingSoon()">Email likhna hai</span>
       </div>`, 200);
       break;
-
-    // === YOUTUBE VIEWS FLOW ===
 
     case 'yt_problem':
       disableChips();
@@ -610,7 +957,6 @@ async function goToState(state) {
       await wait(1200);
       hideSkeleton();
 
-      // Concept card with image
       await addRaw(`<div class="concept-card">
         <img class="concept-card-img" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop" alt="Analytics" />
         <div class="concept-card-body">
@@ -618,7 +964,7 @@ async function goToState(state) {
           <h4>Click-Through Rate (CTR)</h4>
           <p>CTR matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein = <strong>5% CTR</strong>.</p>
           <div style="margin-top:12px;">
-            <button class="listen-btn listen-btn-dark" onclick="speakHindi('Click-Through Rate matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein toh 5 percent CTR hai.')">${ICONS.play} Suno Hindi mein</button>
+            <button class="listen-btn listen-btn-dark" onclick="speakHindi(TTS_TEXTS.ctr)">${ICONS.play} Suno Hindi mein</button>
           </div>
         </div>
       </div>`, 0);
@@ -641,299 +987,46 @@ async function goToState(state) {
         <div class="roadmap-sub">Aaj Thumbnail se shuru karte hain</div>
         <div class="roadmap-step active">
           <div class="roadmap-num">1</div>
-          <div class="roadmap-step-text">
-            <h5>Thumbnail</h5>
-            <p>Visual Hook (Aaj yeh karenge)</p>
-          </div>
+          <div class="roadmap-step-text"><h5>Thumbnail</h5><p>Visual Hook (Aaj yeh karenge)</p></div>
           <div class="roadmap-step-icon">${ICONS.play}</div>
         </div>
         <div class="roadmap-step locked">
           <div class="roadmap-num">2</div>
-          <div class="roadmap-step-text">
-            <h5>Title</h5>
-            <p>Curiosity Gap</p>
-          </div>
+          <div class="roadmap-step-text"><h5>Title</h5><p>Curiosity Gap</p></div>
           <div class="roadmap-step-icon">${ICONS.lock}</div>
         </div>
         <div class="roadmap-step locked">
           <div class="roadmap-num">3</div>
-          <div class="roadmap-step-text">
-            <h5>Topic</h5>
-            <p>Market Demand</p>
-          </div>
+          <div class="roadmap-step-text"><h5>Topic</h5><p>Market Demand</p></div>
           <div class="roadmap-step-icon">${ICONS.lock}</div>
         </div>
       </div>`, 300);
 
       await addRaw(`<div class="chips">
-        <span class="chip" onclick="goToState('yt_hook')">Thumbnail seekho</span>
+        <span class="chip" onclick="goToState('yt_steps')">Thumbnail seekho</span>
       </div>`, 200);
       break;
 
-    case 'yt_hook':
+    case 'yt_steps':
       disableChips();
       await addMsg('user', 'Thumbnail seekho');
       showSkeleton();
       await wait(1000);
       hideSkeleton();
+      await addMsg('ai', `Yeh raha aapka 5-step mini-course! Arrows se navigate karo.`);
 
-      // Progress
-      await addRaw(`<div style="margin-top:4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 1 / 5</span>
-          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">THUMBNAIL</span>
-        </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" style="width:20%"></div>
-        </div>
-      </div>`, 0);
+      // Reset carousel state
+      currentStep = 1;
+      stepGenerated = false;
+      qualityDone = false;
 
-      await addRaw(`<div class="concept-card">
-        <img class="concept-card-img" src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=600&auto=format&fit=crop" alt="Hook Concept" />
-        <div class="concept-card-body">
-          <span class="concept-card-tag">Concept: The Hook</span>
-          <h4>Scroll Rokne Wala Element</h4>
-          <p>Hook woh ek element hai jo scroll rokta hai. Yeh usually ek face ya massive contrast hota hai. Bina hook ke, design koi kaam nahi karega.</p>
-          <div style="margin-top:12px;">
-            <button class="listen-btn listen-btn-dark" onclick="speakHindi('Hook woh ek element hai jo scroll rokta hai. Yeh usually ek face ya massive contrast hota hai. Bina hook ke design koi kaam nahi karega.')">${ICONS.play} Suno Hindi mein</button>
-          </div>
-        </div>
-      </div>`, 0);
-
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="goToState('yt_prompting')">Aage badho</span>
-      </div>`, 300);
-      break;
-
-    case 'yt_prompting':
-      disableChips();
-      await addMsg('user', 'Aage badho');
-      showTyping();
-      await wait(600);
-      hideTyping();
-
-      // Progress
-      await addRaw(`<div style="margin-top:4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 2 / 5</span>
-          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">PROMPTING</span>
-        </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" style="width:40%"></div>
-        </div>
-      </div>`, 0);
-
-      await addRaw(`<div class="concept-card">
-        <img class="concept-card-img" src="https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?q=80&w=600&auto=format&fit=crop" alt="Prompting" />
-        <div class="concept-card-body">
-          <span class="concept-card-tag">Concept: Prompting 101</span>
-          <h4>AI ko Kaise Bolo</h4>
-          <p>AI literal hai. Isko ek structured formula chahiye sahi result ke liye: <strong>[Subject] + [Action/Emotion]</strong>. Jitna specific, utna achha result.</p>
-          <div style="background:rgba(255,255,255,0.1);border-radius:var(--radius-sm);padding:10px;margin-top:12px;border:1px solid rgba(255,255,255,0.1);">
-            <div style="font-size:10px;font-weight:700;color:var(--sparkle);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Example Prompt</div>
-            <div style="font-size:13px;color:var(--white);">"Stressed chef in kitchen, shocked expression, cinematic lighting"</div>
-          </div>
-          <div style="margin-top:12px;">
-            <button class="listen-btn listen-btn-dark" onclick="speakHindi('AI ko ek structured formula chahiye. Subject plus Action ya Emotion. Jitna specific bologe utna achha result milega.')">${ICONS.play} Suno Hindi mein</button>
-          </div>
-        </div>
-      </div>`, 0);
-
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="goToState('yt_compare')">Example dikhao</span>
-      </div>`, 300);
-      break;
-
-    case 'yt_compare':
-      disableChips();
-      await addMsg('user', 'Example dikhao');
-      showTyping();
-      await wait(600);
-      hideTyping();
-
-      // Progress
-      await addRaw(`<div style="margin-top:4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 3 / 5</span>
-          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">GOOD vs BAD</span>
-        </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" style="width:60%"></div>
-        </div>
-      </div>`, 0);
-
-      await addRaw(`<div class="compare-card">
-        <h4>${ICONS.eye} Good vs. Bad Thumbnail</h4>
-        <div class="compare-sub">Pehchano ki kya achha kaam karta hai aur kya nahi</div>
-
-        <div class="compare-item bad">
-          <span class="compare-label bad">Bad Thumbnail</span>
-          <img class="compare-img" src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop" alt="Bad Example" />
-          <div class="compare-reason bad">
-            ${ICONS.close} <span>Boring, no face, no emotion, text too small — scroll past ho jaayega</span>
-          </div>
-        </div>
-
-        <div class="compare-item good">
-          <span class="compare-label good">Good Thumbnail</span>
-          <img class="compare-img" src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=600&auto=format&fit=crop" alt="Good Example" />
-          <div class="compare-reason good">
-            ${ICONS.check} <span>Clear hook, big contrast, readable on mobile — click milega!</span>
-          </div>
-        </div>
-      </div>`, 0);
-
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="goToState('yt_create')">Ab apna banao</span>
-      </div>`, 300);
-      break;
-
-    case 'yt_create':
-      disableChips();
-      await addMsg('user', 'Ab apna banao');
-      showTyping();
-      await wait(600);
-      hideTyping();
-      await addMsg('ai', `Ab apna thumbnail banate hain! Neeche form bharo — Subject, Emotion, aur Text.`);
-
-      // Progress
-      await addRaw(`<div style="margin-top:4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 4 / 5</span>
-          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">CREATE</span>
-        </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" style="width:80%"></div>
-        </div>
-      </div>`, 0);
-
-      await addRaw(`<div class="create-card" id="createFormCard">
-        <h4>${ICONS.wand} Guided Creation</h4>
-        <div class="create-sub">Apna idea frame karo. Ek bold version try karo.</div>
-
-        <div class="create-label">Subject (Kaun/Kya?)</div>
-        <input class="create-input" id="createSubject" type="text" placeholder="e.g. Stressed chef in kitchen" oninput="updateCreateBtn()" />
-
-        <div class="create-row">
-          <div>
-            <div class="create-label">Emotion</div>
-            <select class="create-select" id="createEmotion">
-              <option value="Shocked">Shocked</option>
-              <option value="Angry">Angry</option>
-              <option value="Happy">Happy</option>
-            </select>
-          </div>
-          <div>
-            <div class="create-label">Vibe</div>
-            <select class="create-select" id="createVibe">
-              <option value="Cinematic">Cinematic</option>
-              <option value="Neon">Neon</option>
-              <option value="Natural">Natural</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="create-label">Overlay Text (Hook)</div>
-        <input class="create-input" id="createText" type="text" placeholder="e.g. SECRET REVEALED!" />
-
-        <button class="create-btn" id="createGenBtn" disabled onclick="generateThumbnail()">
-          ${ICONS.wand} Generate Karo
-        </button>
-      </div>`, 0);
-      break;
-
-    case 'yt_generating':
-      // Show skeleton while "generating"
-      showSkeleton();
-      await wait(2500);
-      hideSkeleton();
-      stateTransitioning = false;
-      goToState('yt_result');
-      return;
-
-    case 'yt_result':
-      const overlayText = createFormData.text || 'WATCH THIS!';
-
-      await addRaw(`<div class="result-card">
-        <img src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=600&auto=format&fit=crop" alt="Generated Thumbnail" />
-        <div class="result-overlay">
-          <h3>${overlayText}</h3>
-        </div>
-      </div>`, 0);
-
-      await wait(300);
-      await addMsg('ai', `Yeh raha aapka thumbnail! Ab quality check karte hain.`);
-
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="goToState('yt_quality')">Quality Check Karo</span>
-      </div>`, 200);
-      break;
-
-    case 'yt_quality':
-      disableChips();
-      await addMsg('user', 'Quality Check Karo');
-
-      // Progress
-      await addRaw(`<div style="margin-top:4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 5 / 5</span>
-          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">QUALITY CHECK</span>
-        </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar-fill" style="width:90%"></div>
-        </div>
-      </div>`, 0);
-
-      await addRaw(`<div class="quality-card" id="qualityCard">
-        <h4>AI Quality Check</h4>
-        <div class="quality-check" id="qc1">
-          <span>Hook 2 second mein clear?</span>
-          <span class="qc-status pending" id="qc1-status">${ICONS.spinner}</span>
-        </div>
-        <div class="quality-check" id="qc2">
-          <span>Text mobile pe readable?</span>
-          <span class="qc-status pending" id="qc2-status">${ICONS.spinner}</span>
-        </div>
-        <div class="quality-check" id="qc3">
-          <span>Video topic se match?</span>
-          <span class="qc-status pending" id="qc3-status">${ICONS.spinner}</span>
-        </div>
-      </div>`, 0);
-
-      // Animate quality checks
-      await wait(1200);
-      document.getElementById('qc1-status').className = 'qc-status pass';
-      document.getElementById('qc1-status').innerHTML = ICONS.check;
-      document.getElementById('qc1-status').style.color = 'var(--success)';
-
-      await wait(1000);
-      document.getElementById('qc2-status').className = 'qc-status pass';
-      document.getElementById('qc2-status').innerHTML = ICONS.check;
-      document.getElementById('qc2-status').style.color = 'var(--success)';
-
-      await wait(1000);
-      document.getElementById('qc3-status').className = 'qc-status pass';
-      document.getElementById('qc3-status').innerHTML = ICONS.check;
-      document.getElementById('qc3-status').style.color = 'var(--success)';
-
-      await wait(500);
-      // Add result to quality card
-      const qCard = document.getElementById('qualityCard');
-      if (qCard) {
-        const resultDiv = document.createElement('div');
-        resultDiv.className = 'quality-result fade-in';
-        resultDiv.textContent = 'Yeh thumbnail clear, clickable, aur usable hai!';
-        qCard.appendChild(resultDiv);
-      }
-
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="goToState('yt_anchor')">Confirm Karo</span>
-      </div>`, 400);
+      await addRaw(renderCarousel(), 0);
       break;
 
     case 'yt_anchor':
       disableChips();
-      await addMsg('user', 'Confirm Karo');
+      document.querySelectorAll('#postCarouselChips .chip').forEach(c => { c.style.pointerEvents = 'none'; c.style.opacity = '0.38'; });
+      await addMsg('user', 'Samajh gaya, aage badho');
       showTyping();
       await wait(600);
       hideTyping();
@@ -950,7 +1043,7 @@ async function goToState(state) {
           <div class="anchor-skill-text">"Pehle 2 seconds mein dhyan kheenchna — yeh har visual content mein kaam aata hai."</div>
         </div>
         <div style="margin-top:12px;">
-          <button class="listen-btn listen-btn-dark" onclick="speakHindi('Jab log scroll karte hain, unka dimaag 2 second mein decide karta hai ki click karna hai ya nahi. Ek achha thumbnail woh decision jeetata hai.')">${ICONS.play} Suno Hindi mein</button>
+          <button class="listen-btn listen-btn-dark" onclick="speakHindi(TTS_TEXTS.anchor)">${ICONS.play} Suno Hindi mein</button>
         </div>
       </div>`, 0);
 
@@ -966,7 +1059,6 @@ async function goToState(state) {
       await wait(600);
       hideTyping();
 
-      // Progress 100%
       await addRaw(`<div style="margin-top:4px;">
         <div class="progress-bar-container">
           <div class="progress-bar-fill" style="width:100%;background:var(--success);"></div>
@@ -977,7 +1069,6 @@ async function goToState(state) {
         <div class="complete-icon">${ICONS.star}</div>
         <h3>Momentum Ban Gaya!</h3>
         <div class="complete-sub">Aapne Step 1 master kar liya. Ab rukna mat.</div>
-
         <div class="plan-card">
           <div class="plan-card-label">UP NEXT</div>
           <h4>7-Din Creator Plan</h4>
@@ -1000,37 +1091,7 @@ async function goToState(state) {
 // === User actions ===
 function selectPrompt(type) {
   disableChips();
-  if (type === 'youtube') {
-    goToState('yt_problem');
-  }
-}
-
-function updateCreateBtn() {
-  const subject = document.getElementById('createSubject');
-  const btn = document.getElementById('createGenBtn');
-  if (subject && btn) {
-    btn.disabled = !subject.value.trim();
-  }
-}
-
-function generateThumbnail() {
-  const subject = document.getElementById('createSubject');
-  const emotion = document.getElementById('createEmotion');
-  const text = document.getElementById('createText');
-  createFormData.subject = subject ? subject.value : '';
-  createFormData.emotion = emotion ? emotion.value : 'Shocked';
-  createFormData.text = text ? text.value : '';
-
-  // Disable form
-  const card = document.getElementById('createFormCard');
-  if (card) {
-    card.querySelectorAll('input,select,button').forEach(el => el.disabled = true);
-  }
-
-  // Show user message
-  addMsg('user', `Subject: ${createFormData.subject}, ${createFormData.emotion}`).then(() => {
-    goToState('yt_generating');
-  });
+  if (type === 'youtube') goToState('yt_problem');
 }
 
 function restartFlow() {
