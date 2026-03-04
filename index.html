@@ -480,16 +480,17 @@ const ICONS = {
 // === Sarvam AI Text-to-Speech Engine ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
-const SARVAM_SPEAKER = 'kavya';
+const SARVAM_SPEAKER = 'sophia';
 const ttsCache = new Map();
 let currentAudio = null;
 
-async function sarvamTTS(text, pace = 1.0) {
+async function sarvamTTS(text, pace = 1.0, onended = null) {
   const cacheKey = text + '|' + pace;
   if (ttsCache.has(cacheKey)) {
     const audio = new Audio(ttsCache.get(cacheKey));
     if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
     currentAudio = audio;
+    if (onended) audio.onended = onended;
     audio.play().catch(() => {});
     return;
   }
@@ -512,11 +513,13 @@ async function sarvamTTS(text, pace = 1.0) {
       const audio = new Audio(dataUrl);
       if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
       currentAudio = audio;
+      if (onended) audio.onended = onended;
       audio.play().catch(() => {});
     }
   } catch (e) {
     console.warn('Sarvam TTS failed, falling back to browser TTS:', e);
     browserSpeak(text, pace < 0.8 ? 0.65 : 0.85);
+    if (onended) setTimeout(onended, 3000);
   }
 }
 
@@ -933,154 +936,35 @@ async function goToState(state) {
       </div>`, 300);
       break;
 
-    case 'j3_sarah_intro':
-      await addRaw(`<div class="call-card">
+    case 'j3_sarah_call':
+      callStep = 0;
+      callSeconds = 0;
+      await addRaw(`<div class="call-card" id="callCard">
         <div class="call-hero">
           <div class="call-avatar">&#128105;&#8205;&#127979;</div>
           <div class="call-name">Sarah</div>
           <div class="call-role">Business English Coach</div>
-          <div class="call-status"><div class="call-status-dot"></div> Connected</div>
-          <div class="call-timer">00:04</div>
+          <div class="call-status" id="callStatus"><div class="call-status-dot"></div> Connecting...</div>
+          <div class="call-timer" id="callTimer">00:00</div>
         </div>
-        <div class="call-waves">
+        <div class="call-waves" id="callWaves">
           ${[10,18,28,36,28,36,28,18,10].map((h,i) => `<div class="call-wave-bar" style="animation-delay:${i*0.12}s;height:${h}px"></div>`).join('')}
         </div>
-        <div class="call-transcript">
-          <div class="call-transcript-label">Live Transcript</div>
-          <div class="call-transcript-speaker">Sarah</div>
-          <div class="call-transcript-text">Hi there! I'm Sarah, your Business English coach. Let's pretend we're meeting at a conference. How would you introduce yourself?</div>
-        </div>
-        <div class="call-hint">💡 Try: "Hello, I'm [name]. I work at [company] in [city]."</div>
-        <div class="call-actions">
-          <button class="call-btn call-btn-listen" onclick="speakSlow('Hi there! I am Sarah, your Business English coach. How would you introduce yourself?')">
+        <div id="callContent"></div>
+        <div class="call-actions" id="callActions">
+          <button class="call-btn call-btn-listen" onclick="replayCallAudio()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
           </button>
-          <button class="call-btn call-btn-mic" onclick="simulateSarahConvo1()">
+          <button class="call-btn call-btn-mic" id="callMicBtn" onclick="advanceCall()" style="opacity:0.4;pointer-events:none">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
           </button>
-          <button class="call-btn call-btn-end" onclick="goToState('back_to_menu')">
+          <button class="call-btn call-btn-end" onclick="endCall()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
           </button>
         </div>
       </div>`, 0);
-      break;
-
-    case 'j3_sarah_round1':
-      await addRaw(`<div class="call-card">
-        <div class="call-hero">
-          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
-          <div class="call-name">Sarah</div>
-          <div class="call-role">Business English Coach</div>
-          <div class="call-status"><div class="call-status-dot"></div> Listening</div>
-          <div class="call-timer">01:23</div>
-        </div>
-        <div class="call-transcript">
-          <div class="call-transcript-label">Live Transcript</div>
-          <div class="call-transcript-you">You said:</div>
-          <div class="call-transcript-user">"Hello, I am Rahul. I am working in IT company in Ahmedabad."</div>
-          <div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div>
-          <div class="call-transcript-text">Good start, Rahul! Small tip — instead of "I am working in IT company", try: <strong>"I work at an IT company in Ahmedabad."</strong><br><br>What does your company do? Tell me about it.</div>
-        </div>
-        <div class="call-correction">
-          <div class="call-correction-label">✏️ Correction</div>
-          <div class="call-correction-text">
-            <strong>"I work at"</strong> not "I am working in"<br>
-            Use <strong>"an"</strong> before vowel sounds<br>
-            Present simple for permanent jobs
-          </div>
-        </div>
-        <div class="call-actions">
-          <button class="call-btn call-btn-listen" onclick="speakSlow('I work at an IT company in Ahmedabad.')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-          </button>
-          <button class="call-btn call-btn-mic" onclick="simulateSarahConvo2()">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
-          </button>
-          <button class="call-btn call-btn-end" onclick="goToState('back_to_menu')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-          </button>
-        </div>
-      </div>`, 0);
-      break;
-
-    case 'j3_sarah_round2':
-      await addRaw(`<div class="call-card">
-        <div class="call-hero">
-          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
-          <div class="call-name">Sarah</div>
-          <div class="call-role">Business English Coach</div>
-          <div class="call-status"><div class="call-status-dot"></div> Listening</div>
-          <div class="call-timer">02:47</div>
-        </div>
-        <div class="call-transcript">
-          <div class="call-transcript-label">Live Transcript</div>
-          <div class="call-transcript-you">You said:</div>
-          <div class="call-transcript-user">"We are making software for hospitals. It is very good company, 200 peoples working."</div>
-          <div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div>
-          <div class="call-transcript-text">Healthcare software, that's impressive! A few corrections:<br><br><strong>"We develop software for hospitals."</strong><br><strong>"It's a great company with 200 employees."</strong><br><br>What sets your company apart?</div>
-        </div>
-        <div class="call-correction">
-          <div class="call-correction-label">✏️ Key Fixes</div>
-          <div class="call-correction-text">
-            <strong>"develop"</strong> not "making" — more professional<br>
-            <strong>"employees"</strong> not "peoples working"<br>
-            "People" is already plural — never "peoples"
-          </div>
-        </div>
-        <div class="call-actions">
-          <button class="call-btn call-btn-listen" onclick="speakSlow('We develop software for hospitals. It is a great company with 200 employees.')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-          </button>
-          <button class="call-btn call-btn-mic" onclick="simulateSarahConvo3()">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
-          </button>
-          <button class="call-btn call-btn-end" onclick="goToState('back_to_menu')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-          </button>
-        </div>
-      </div>`, 0);
-      break;
-
-    case 'j3_sarah_round3':
-      await addRaw(`<div class="call-card">
-        <div class="call-hero">
-          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
-          <div class="call-name">Sarah</div>
-          <div class="call-role">Business English Coach</div>
-          <div class="call-status" style="color:var(--secondary)"><div class="call-status-dot" style="background:var(--secondary)"></div> Call ended · 3:42</div>
-        </div>
-        <div class="call-transcript">
-          <div class="call-transcript-label">Last exchange</div>
-          <div class="call-transcript-you">You said:</div>
-          <div class="call-transcript-user">"Our company is different because we are giving very fast service and our software is easy for using."</div>
-          <div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div>
-          <div class="call-transcript-text">You're getting better, Rahul!<br><strong>"What sets us apart is our fast service and user-friendly software."</strong></div>
-        </div>
-        <div class="call-correction">
-          <div class="call-correction-label">✏️ Final Polish</div>
-          <div class="call-correction-text">
-            <strong>"What sets us apart"</strong> — great business phrase<br>
-            <strong>"user-friendly"</strong> not "easy for using"
-          </div>
-        </div>
-        <div class="call-summary">
-          <div class="call-summary-title">Session Summary</div>
-          <div class="call-summary-item">✅ <strong>"I work at"</strong> instead of "I am working in"</div>
-          <div class="call-summary-item">✅ <strong>"We develop"</strong> instead of "We are making"</div>
-          <div class="call-summary-item">✅ <strong>"200 employees"</strong> not "200 peoples"</div>
-          <div class="call-summary-item">✅ <strong>"User-friendly"</strong> instead of "easy for using"</div>
-          <div class="call-summary-item">✅ <strong>"What sets us apart"</strong> — business power phrase</div>
-        </div>
-        <div class="call-actions">
-          <button class="call-btn call-btn-listen" onclick="speakSlow('What sets us apart is our fast service and user-friendly software.')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-          </button>
-        </div>
-      </div>`, 0);
-      await addRaw(`<div class="chips" style="margin-top:12px;">
-        <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
-        <span class="chip" onclick="goToState('j3_companions')">Practice with someone else</span>
-      </div>`, 200);
+      startCallTimer();
+      setTimeout(() => renderCallStep(0), 600);
       break;
 
     // ========== BACK TO MENU ==========
@@ -1116,7 +1000,7 @@ function selectVocabTopic(topic) {
 }
 
 function selectCompanion(name) {
-  addMsg('user', `I'll practice with ${name}`).then(() => goToState('j3_sarah_intro'));
+  addMsg('user', `I'll practice with ${name}`).then(() => goToState('j3_sarah_call'));
 }
 
 function simulateRecording() {
@@ -1140,9 +1024,169 @@ function simulateVocabRecording() {
   }, 1500);
 }
 
-function simulateSarahConvo1() { goToState('j3_sarah_round1'); }
-function simulateSarahConvo2() { goToState('j3_sarah_round2'); }
-function simulateSarahConvo3() { goToState('j3_sarah_round3'); }
+// === Call Engine (Journey 3 - Single Dynamic Card) ===
+let callStep = 0;
+let callTimerInterval = null;
+let callSeconds = 0;
+
+const callRounds = [
+  {
+    status: 'Connected',
+    statusColor: '',
+    transcript: '<div class="call-transcript-speaker">Sarah</div><div class="call-transcript-text">Hi there! I\'m Sarah, your Business English coach. Let\'s pretend we\'re meeting at a conference. How would you introduce yourself?</div>',
+    hint: '\uD83D\uDCA1 Try: "Hello, I\'m [name]. I work at [company] in [city]."',
+    correction: '',
+    summary: '',
+    speakText: "Hi there! I am Sarah, your Business English coach. Let's pretend we are meeting at a conference. How would you introduce yourself?",
+    listenText: "Hi there! I am Sarah, your Business English coach. How would you introduce yourself?"
+  },
+  {
+    status: 'Listening',
+    statusColor: '',
+    transcript: '<div class="call-transcript-you">You said:</div><div class="call-transcript-user">"Hello, I am Rahul. I am working in IT company in Ahmedabad."</div><div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div><div class="call-transcript-text">Good start, Rahul! Small tip \u2014 instead of "I am working in IT company", try: <strong>"I work at an IT company in Ahmedabad."</strong><br><br>What does your company do? Tell me about it.</div>',
+    hint: '',
+    correction: '<div class="call-correction"><div class="call-correction-label">\u270F\uFE0F Correction</div><div class="call-correction-text"><strong>"I work at"</strong> not "I am working in"<br>Use <strong>"an"</strong> before vowel sounds<br>Present simple for permanent jobs</div></div>',
+    summary: '',
+    speakText: "Good start, Rahul! Small tip. Instead of I am working in IT company, try: I work at an IT company in Ahmedabad. What does your company do? Tell me about it.",
+    listenText: "I work at an IT company in Ahmedabad."
+  },
+  {
+    status: 'Listening',
+    statusColor: '',
+    transcript: '<div class="call-transcript-you">You said:</div><div class="call-transcript-user">"We are making software for hospitals. It is very good company, 200 peoples working."</div><div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div><div class="call-transcript-text">Healthcare software, that\'s impressive! A few corrections:<br><br><strong>"We develop software for hospitals."</strong><br><strong>"It\'s a great company with 200 employees."</strong><br><br>What sets your company apart?</div>',
+    hint: '',
+    correction: '<div class="call-correction"><div class="call-correction-label">\u270F\uFE0F Key Fixes</div><div class="call-correction-text"><strong>"develop"</strong> not "making" \u2014 more professional<br><strong>"employees"</strong> not "peoples working"<br>"People" is already plural \u2014 never "peoples"</div></div>',
+    summary: '',
+    speakText: "Healthcare software, that's impressive! A few corrections. We develop software for hospitals. It's a great company with 200 employees. What sets your company apart?",
+    listenText: "We develop software for hospitals. It is a great company with 200 employees."
+  },
+  {
+    status: 'Call ended',
+    statusColor: 'var(--secondary)',
+    transcript: '<div class="call-transcript-you">You said:</div><div class="call-transcript-user">"Our company is different because we are giving very fast service and our software is easy for using."</div><div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div><div class="call-transcript-text">You\'re getting better, Rahul!<br><strong>"What sets us apart is our fast service and user-friendly software."</strong></div>',
+    hint: '',
+    correction: '<div class="call-correction"><div class="call-correction-label">\u270F\uFE0F Final Polish</div><div class="call-correction-text"><strong>"What sets us apart"</strong> \u2014 great business phrase<br><strong>"user-friendly"</strong> not "easy for using"</div></div>',
+    summary: '<div class="call-summary"><div class="call-summary-title">Session Summary</div><div class="call-summary-item">\u2705 <strong>"I work at"</strong> instead of "I am working in"</div><div class="call-summary-item">\u2705 <strong>"We develop"</strong> instead of "We are making"</div><div class="call-summary-item">\u2705 <strong>"200 employees"</strong> not "200 peoples"</div><div class="call-summary-item">\u2705 <strong>"User-friendly"</strong> instead of "easy for using"</div><div class="call-summary-item">\u2705 <strong>"What sets us apart"</strong> \u2014 business power phrase</div></div>',
+    speakText: "You're getting better, Rahul! What sets us apart is our fast service and user-friendly software.",
+    listenText: "What sets us apart is our fast service and user-friendly software."
+  }
+];
+
+function startCallTimer() {
+  callSeconds = 0;
+  if (callTimerInterval) clearInterval(callTimerInterval);
+  callTimerInterval = setInterval(() => {
+    callSeconds++;
+    const m = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+    const s = String(callSeconds % 60).padStart(2, '0');
+    const el = document.getElementById('callTimer');
+    if (el) el.textContent = m + ':' + s;
+  }, 1000);
+}
+
+function stopCallTimer() {
+  if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
+}
+
+function renderCallStep(step) {
+  const round = callRounds[step];
+  if (!round) return;
+
+  const content = document.getElementById('callContent');
+  const statusEl = document.getElementById('callStatus');
+  const micBtn = document.getElementById('callMicBtn');
+  const wavesEl = document.getElementById('callWaves');
+  const actionsEl = document.getElementById('callActions');
+  if (!content) return;
+
+  // Update status
+  if (round.statusColor) {
+    statusEl.style.color = round.statusColor;
+    const timerEl = document.getElementById('callTimer');
+    statusEl.innerHTML = '<div class="call-status-dot" style="background:' + round.statusColor + '"></div> ' + round.status + ' \u00B7 ' + (timerEl ? timerEl.textContent : '');
+    stopCallTimer();
+  } else {
+    statusEl.style.color = '';
+    statusEl.innerHTML = '<div class="call-status-dot"></div> ' + round.status;
+  }
+
+  // Build dynamic content
+  let html = '<div class="call-transcript fade-in"><div class="call-transcript-label">Live Transcript</div>' + round.transcript + '</div>';
+  if (round.hint) html += '<div class="call-hint">' + round.hint + '</div>';
+  if (round.correction) html += round.correction;
+  if (round.summary) html += round.summary;
+  content.innerHTML = html;
+
+  // Show/hide waves
+  if (round.statusColor) {
+    wavesEl.style.display = 'none';
+  } else {
+    wavesEl.style.display = 'flex';
+  }
+
+  // Disable mic while speaking
+  if (micBtn) {
+    micBtn.style.opacity = '0.4';
+    micBtn.style.pointerEvents = 'none';
+    micBtn.classList.remove('recording');
+  }
+
+  // On final step, hide mic and show chips after card
+  const isFinal = step === callRounds.length - 1;
+  if (isFinal && actionsEl) {
+    actionsEl.innerHTML = '<button class="call-btn call-btn-listen" onclick="replayCallAudio()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>';
+  }
+
+  // Auto-speak Sarah's text
+  sarvamTTS(round.speakText, 1.0, () => {
+    if (!isFinal) {
+      const mic = document.getElementById('callMicBtn');
+      if (mic) {
+        mic.style.opacity = '1';
+        mic.style.pointerEvents = 'auto';
+      }
+      // Update status to show mic is ready
+      const st = document.getElementById('callStatus');
+      if (st) st.innerHTML = '<div class="call-status-dot"></div> Your turn \u2014 tap mic to speak';
+    } else {
+      // Show end-of-session chips
+      addRaw('<div class="chips" style="margin-top:12px;"><span class="chip" onclick="goToState(\'back_to_menu\')">Back to menu</span><span class="chip" onclick="goToState(\'j3_companions\')">Practice with someone else</span></div>', 0);
+    }
+  });
+
+  scrollToBottom();
+}
+
+function advanceCall() {
+  const micBtn = document.getElementById('callMicBtn');
+  if (!micBtn) return;
+
+  // Simulate recording animation
+  micBtn.classList.add('recording');
+  micBtn.style.pointerEvents = 'none';
+
+  const statusEl = document.getElementById('callStatus');
+  if (statusEl) statusEl.innerHTML = '<div class="call-status-dot" style="background:var(--error)"></div> Recording...';
+
+  setTimeout(() => {
+    micBtn.classList.remove('recording');
+    callStep++;
+    if (callStep < callRounds.length) {
+      renderCallStep(callStep);
+    }
+  }, 1500);
+}
+
+function replayCallAudio() {
+  const round = callRounds[callStep];
+  if (round) speakSlow(round.listenText);
+}
+
+function endCall() {
+  stopCallTimer();
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+  goToState('back_to_menu');
+}
 
 // Simulate mic recording on phrase/greeting cards — shows visual feedback + speaks
 function simulateMicFeedback(btn) {
