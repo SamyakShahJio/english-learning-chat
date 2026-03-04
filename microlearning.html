@@ -40,7 +40,7 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 
 .phone-frame {
   width: 100%; max-width: 420px; height: 900px; background: var(--white);
-  border-radius: 54px; border: 12px solid var(--grey-100);
+  border-radius: 54px; border: none;
   position: relative; overflow: hidden; box-shadow: 0 60px 120px -30px rgba(0,0,0,0.3);
 }
 
@@ -76,7 +76,7 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
   scroll-behavior: smooth; background: var(--white);
 }
 .chat-area::-webkit-scrollbar { width: 0; }
-.chat-body { display: flex; flex-direction: column; height: calc(900px - 50px - 56px - 68px); }
+.chat-body { display: flex; flex-direction: column; height: calc(900px - 56px - 68px); }
 
 .msg { max-width: 88%; animation: msgIn 0.35s ease-out; }
 .msg-ai { align-self: flex-start; }
@@ -435,12 +435,7 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 <body>
 
 <div class="phone-frame">
-  <div class="notch"><div class="notch-pill"></div></div>
-
-  <div class="status-bar">
-    <span>9:41</span>
-    <div class="battery"><div class="battery-fill"></div></div>
-  </div>
+  <!-- notch and status bar removed -->
 
   <div class="chat-header">
     <div class="chat-header-avatar">
