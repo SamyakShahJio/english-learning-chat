@@ -372,33 +372,63 @@ const ICONS = {
   profile: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6a4 4 0 11-8 0 4 4 0 018 0zm4 10.5c0 3.038-3.582 5.5-8 5.5s-8-2.462-8-5.5S7.582 11 12 11s8 2.462 8 5.5z"/></svg>',
 };
 
-// === Text-to-Speech Engine ===
-let speechVoice = null;
-function initVoices() {
-  const voices = speechSynthesis.getVoices();
-  // Prefer a natural English voice
-  speechVoice = voices.find(v => v.name.includes('Samantha'))
-    || voices.find(v => v.name.includes('Karen'))
-    || voices.find(v => v.name.includes('Daniel'))
-    || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
-    || voices.find(v => v.lang.startsWith('en-') && !v.name.includes('Compact'))
-    || voices.find(v => v.lang.startsWith('en'))
-    || null;
-}
-speechSynthesis.onvoiceschanged = initVoices;
-initVoices();
+// === Sarvam AI Text-to-Speech Engine ===
+const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
+const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
+const SARVAM_SPEAKER = 'amelia';
+const ttsCache = new Map();
+let currentAudio = null;
 
-function speak(text, rate = 0.85) {
+async function sarvamTTS(text, pace = 1.0) {
+  const cacheKey = text + '|' + pace;
+  if (ttsCache.has(cacheKey)) {
+    const audio = new Audio(ttsCache.get(cacheKey));
+    if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+    currentAudio = audio;
+    audio.play().catch(() => {});
+    return;
+  }
+  try {
+    const res = await fetch(SARVAM_TTS_URL, {
+      method: 'POST',
+      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inputs: [text],
+        target_language_code: 'en-IN',
+        speaker: SARVAM_SPEAKER,
+        model: 'bulbul:v3',
+        pace: pace
+      })
+    });
+    const data = await res.json();
+    if (data.audios && data.audios[0]) {
+      const dataUrl = 'data:audio/wav;base64,' + data.audios[0];
+      ttsCache.set(cacheKey, dataUrl);
+      const audio = new Audio(dataUrl);
+      if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+      currentAudio = audio;
+      audio.play().catch(() => {});
+    }
+  } catch (e) {
+    console.warn('Sarvam TTS failed, falling back to browser TTS:', e);
+    browserSpeak(text, pace < 0.8 ? 0.65 : 0.85);
+  }
+}
+
+// Browser TTS fallback
+function browserSpeak(text, rate = 0.85) {
   speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'en-US';
-  utter.rate = rate;
-  utter.pitch = 1;
-  if (speechVoice) utter.voice = speechVoice;
+  utter.lang = 'en-US'; utter.rate = rate; utter.pitch = 1;
   speechSynthesis.speak(utter);
 }
 
-function speakSlow(text) { speak(text, 0.65); }
+function speak(text, rate = 0.85) {
+  const pace = rate < 0.8 ? 0.7 : 1.0;
+  sarvamTTS(text, pace);
+}
+
+function speakSlow(text) { sarvamTTS(text, 0.7); }
 
 function iconBtn(icon, type='primary', onclick='') {
   return `<button class="icon-btn icon-btn-${type}" ${onclick ? `onclick="${onclick}"` : ''}>${ICONS[icon]}</button>`;
@@ -819,8 +849,6 @@ async function goToState(state) {
       await addRaw(`<div class="chips">
         <span class="chip" onclick="simulateSarahConvo1()">Simulate my response</span>
       </div>`, 100);
-      // Sarah speaks her intro
-      setTimeout(() => speak("Hi there! I'm Sarah, your Business English coach. Let's pretend we're meeting at a conference. How would you introduce yourself?"), 500);
       break;
 
     case 'j3_sarah_round1':
@@ -844,8 +872,6 @@ async function goToState(state) {
       await addRaw(`<div class="chips">
         <span class="chip" onclick="simulateSarahConvo2()">Continue conversation</span>
       </div>`, 200);
-      // Sarah speaks her correction aloud
-      setTimeout(() => speak("Good start, Rahul! Small tip. Instead of 'I am working in IT company', try: I work at an IT company in Ahmedabad. What does your company do? Tell me about it."), 600);
       break;
 
     case 'j3_sarah_round2':
@@ -870,8 +896,6 @@ async function goToState(state) {
       await addRaw(`<div class="chips">
         <span class="chip" onclick="simulateSarahConvo3()">Continue conversation</span>
       </div>`, 200);
-      // Sarah speaks her correction aloud
-      setTimeout(() => speak("Healthcare software, that's impressive! A few corrections. We develop software for hospitals. Develop sounds more professional than make. It's a great company with 200 employees. That sounds like meaningful work! If I asked you at a conference, what sets your company apart, how would you answer?"), 600);
       break;
 
     case 'j3_sarah_round3':
@@ -911,8 +935,6 @@ async function goToState(state) {
         <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
         <span class="chip" onclick="goToState('j3_companions')">Practice with someone else</span>
       </div>`, 200);
-      // Sarah speaks her final correction + summary
-      setTimeout(() => speak("You're getting better, Rahul! Let me polish that. What sets us apart is our fast service and user-friendly software. Great conversation! Here's your practice summary."), 600);
       break;
 
     // ========== BACK TO MENU ==========
