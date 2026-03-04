@@ -102,6 +102,9 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
   background: var(--white); transition: all 0.2s;
 }
 .chip:hover, .chip:active { background: var(--primary); color: var(--white); }
+.chip-disabled { opacity: 0.35; pointer-events: none; border-color: var(--grey-60); color: var(--grey-60); }
+.situation-card-disabled { opacity: 0.35; pointer-events: none; }
+.companion-card-disabled { opacity: 0.35; pointer-events: none; }
 
 /* Cards inside chat */
 .card-grid { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; margin-top: 8px; }
@@ -161,7 +164,10 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
 .phrase-card {
   background: var(--white); border: 1.5px solid var(--grey-40); border-radius: var(--radius-lg);
   padding: 14px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; min-width: 0;
 }
+.phrase-card .phrase-text { flex: 1; min-width: 0; }
+.msg:has(.phrase-card), .msg:has(.greeting-card), .msg:has(.call-card) { max-width: 100%; width: 100%; }
 .phrase-card .phrase-text { flex: 1; }
 .phrase-card .phrase-en { font-size: 14px; font-weight: 700; color: var(--grey-100); line-height: 1.4; }
 .phrase-card .phrase-phonetic { font-size: 11px; color: var(--primary); margin-top: 2px; font-style: italic; }
@@ -323,6 +329,83 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
 .mt-4 { margin-top: 4px; }
 .mt-8 { margin-top: 8px; }
 .mb-4 { margin-bottom: 4px; }
+
+/* === Voice Call UI === */
+.call-card {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  border-radius: var(--radius-lg); overflow-y: auto; color: var(--white);
+  padding: 32px 20px 24px; text-align: center; position: relative;
+  min-height: 680px; display: flex; flex-direction: column; align-items: center;
+}
+.call-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+.call-avatar {
+  width: 110px; height: 110px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  display: flex; align-items: center; justify-content: center; font-size: 52px;
+  box-shadow: 0 0 0 6px rgba(53,53,243,0.25), 0 0 60px rgba(53,53,243,0.3);
+  margin-bottom: 14px;
+}
+.call-name { font-size: 20px; font-weight: 900; margin-bottom: 2px; }
+.call-role { font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.call-status { font-size: 13px; color: var(--sparkle); font-weight: 700; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.call-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sparkle); animation: pulse-dot 1.5s infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.call-waves {
+  display: flex; gap: 4px; align-items: center; justify-content: center;
+  height: 48px; margin: 20px 0;
+}
+.call-wave-bar {
+  width: 4px; border-radius: 99px; background: var(--primary);
+  animation: callWave 1s ease-in-out infinite;
+}
+@keyframes callWave { 0%, 100% { height: 8px; opacity: 0.4; } 50% { height: 36px; opacity: 1; } }
+
+.call-transcript {
+  background: rgba(255,255,255,0.08); border-radius: var(--radius-md);
+  padding: 14px 16px; width: 100%; text-align: left; margin-top: 12px;
+  border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(8px);
+}
+.call-transcript-label {
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+  color: rgba(255,255,255,0.35); margin-bottom: 8px;
+}
+.call-transcript-speaker { font-size: 11px; font-weight: 700; color: var(--sparkle); margin-bottom: 4px; }
+.call-transcript-text { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.85); }
+.call-transcript-you { color: var(--secondary); font-weight: 700; font-size: 11px; margin-top: 10px; margin-bottom: 4px; }
+.call-transcript-user { font-size: 13px; color: rgba(255,255,255,0.6); font-style: italic; line-height: 1.4; }
+
+.call-actions {
+  display: flex; gap: 16px; margin-top: 20px; align-items: center; justify-content: center;
+}
+.call-btn {
+  width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.call-btn:active { transform: scale(0.9); }
+.call-btn-mic { background: var(--primary); color: var(--white); box-shadow: 0 4px 20px rgba(53,53,243,0.4); }
+.call-btn-mic.recording { background: var(--error); animation: pulse 1.2s infinite; }
+.call-btn-end { background: var(--error); color: var(--white); width: 48px; height: 48px; }
+.call-btn-listen { background: rgba(255,255,255,0.12); color: var(--white); width: 48px; height: 48px; border: 1px solid rgba(255,255,255,0.15); }
+
+.call-correction {
+  background: rgba(255,255,255,0.06); border-radius: var(--radius-md); padding: 14px 16px;
+  width: 100%; text-align: left; margin-top: 10px;
+  border-left: 3px solid var(--secondary);
+}
+.call-correction-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--secondary); margin-bottom: 8px; }
+.call-correction-text { font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.85); }
+.call-correction-text strong { color: var(--white); }
+.call-hint { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 8px; text-align: center; }
+.call-timer { font-size: 13px; color: rgba(255,255,255,0.3); font-variant-numeric: tabular-nums; margin-top: 4px; }
+
+.call-summary {
+  background: rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 14px 16px;
+  width: 100%; text-align: left; margin-top: 10px;
+}
+.call-summary-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--sparkle); margin-bottom: 10px; }
+.call-summary-item { font-size: 13px; line-height: 1.8; color: rgba(255,255,255,0.8); }
+.call-summary-item strong { color: var(--white); }
 </style>
 </head>
 <body>
@@ -397,7 +480,7 @@ const ICONS = {
 // === Sarvam AI Text-to-Speech Engine ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
-const SARVAM_SPEAKER = 'amelia';
+const SARVAM_SPEAKER = 'kavya';
 const ttsCache = new Map();
 let currentAudio = null;
 
@@ -525,8 +608,8 @@ async function goToState(state) {
       await addMsg('ai', `Which language would you like to learn through?<span class="guj">કઈ ભાષામાં શીખવું છે?</span>`);
       await addRaw(`<div class="chips">
         <span class="chip" onclick="selectLanguage('ગુજરાતી')">ગુજરાતી</span>
-        <span class="chip" onclick="selectLanguage('हिन्दी')">हिन्दी</span>
-        <span class="chip" onclick="selectLanguage('English')">English</span>
+        <span class="chip chip-disabled">हिन्दी</span>
+        <span class="chip chip-disabled">English</span>
       </div>`, 200);
       break;
 
@@ -560,17 +643,17 @@ async function goToState(state) {
           <div class="card-title">Meeting Bride</div>
           <div class="card-sub">કન્યાને મળવું</div>
         </div>
-        <div class="situation-card" onclick="showNotReady()">
+        <div class="situation-card situation-card-disabled">
           <div class="card-icon" style="background:var(--primary)">&#128188;</div>
           <div class="card-title">Work Meeting</div>
           <div class="card-sub">કામની મીટિંગ</div>
         </div>
-        <div class="situation-card" onclick="showNotReady()">
+        <div class="situation-card situation-card-disabled">
           <div class="card-icon" style="background:var(--secondary)">&#127858;</div>
           <div class="card-title">Team Dinner</div>
           <div class="card-sub">ટીમ ડિનર</div>
         </div>
-        <div class="situation-card" onclick="showNotReady()">
+        <div class="situation-card situation-card-disabled">
           <div class="card-icon" style="background:var(--sparkle)">&#9992;&#65039;</div>
           <div class="card-title">Business Trip</div>
           <div class="card-sub">વ્યાપાર પ્રવાસ</div>
@@ -835,13 +918,13 @@ async function goToState(state) {
           <div class="comp-type">AI Teacher / શિક્ષક</div>
           <div class="comp-sub">Business Prep</div>
         </div>
-        <div class="companion-card" onclick="showNotReady()">
+        <div class="companion-card companion-card-disabled">
           <div class="companion-avatar" style="background:var(--error)">&#128378;</div>
           <h4>Alex</h4>
           <div class="comp-type">AI Friend / મિત્ર</div>
           <div class="comp-sub">Casual English</div>
         </div>
-        <div class="companion-card" onclick="showNotReady()">
+        <div class="companion-card companion-card-disabled">
           <div class="companion-avatar" style="background:var(--sparkle)">&#129305;</div>
           <h4>Jake</h4>
           <div class="comp-type">AI Buddy / દોસ્ત</div>
@@ -851,108 +934,149 @@ async function goToState(state) {
       break;
 
     case 'j3_sarah_intro':
-      showTyping(); await wait(900); hideTyping();
-      await addRaw(`<div class="sarah-msg">
-        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
-        <div class="bubble bubble-ai" style="flex:1;">
-          <strong>Sarah:</strong> Hi there! I'm Sarah, your Business English coach. Let's pretend we're meeting at a conference. How would you introduce yourself?
-          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--sparkle)">
-            <div class="pron-label">Hint</div>
-            <div class="pron-tip">Try: "Hello, I'm [name]. I work at [company] in [city]."<br>Key pronunciation: in-tro-DUCE your-SELF</div>
-          </div>
+      await addRaw(`<div class="call-card">
+        <div class="call-hero">
+          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
+          <div class="call-name">Sarah</div>
+          <div class="call-role">Business English Coach</div>
+          <div class="call-status"><div class="call-status-dot"></div> Connected</div>
+          <div class="call-timer">00:04</div>
+        </div>
+        <div class="call-waves">
+          ${[10,18,28,36,28,36,28,18,10].map((h,i) => `<div class="call-wave-bar" style="animation-delay:${i*0.12}s;height:${h}px"></div>`).join('')}
+        </div>
+        <div class="call-transcript">
+          <div class="call-transcript-label">Live Transcript</div>
+          <div class="call-transcript-speaker">Sarah</div>
+          <div class="call-transcript-text">Hi there! I'm Sarah, your Business English coach. Let's pretend we're meeting at a conference. How would you introduce yourself?</div>
+        </div>
+        <div class="call-hint">💡 Try: "Hello, I'm [name]. I work at [company] in [city]."</div>
+        <div class="call-actions">
+          <button class="call-btn call-btn-listen" onclick="speakSlow('Hi there! I am Sarah, your Business English coach. How would you introduce yourself?')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </button>
+          <button class="call-btn call-btn-mic" onclick="simulateSarahConvo1()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+          </button>
+          <button class="call-btn call-btn-end" onclick="goToState('back_to_menu')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+          </button>
         </div>
       </div>`, 0);
-      await addRaw(`<div class="mic-area">
-        <button class="mic-btn-large" onclick="simulateSarahConvo1()">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
-        </button>
-        <div class="mic-label">Speak your introduction</div>
-      </div>`, 200);
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="simulateSarahConvo1()">Simulate my response</span>
-      </div>`, 100);
       break;
 
     case 'j3_sarah_round1':
-      await addMsg('user', 'Hello, I am Rahul. I am working in IT company in Ahmedabad.');
-      showTyping(); await wait(1200); hideTyping();
-      await addRaw(`<div class="sarah-msg">
-        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
-        <div class="bubble bubble-ai" style="flex:1;">
-          <strong>Sarah:</strong> Good start, Rahul! Small tip:<br><br>
-          Instead of <em>"I am working in IT company"</em>, try:<br>
-          <strong>"I work at an IT company in Ahmedabad."</strong>
-          <button class="listen-btn" onclick="speakSlow('I work at an IT company in Ahmedabad.')" style="margin:6px 0;">${ICONS.play} Listen</button>
-          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--sparkle)">
-            <div class="pron-label">Pronunciation Guide</div>
-            <div class="pron-ipa">/aɪ wɜːk ət ən aɪ.tiː ˈkʌm.pə.ni ɪn ˈɑː.mə.dɑː.bæd/</div>
-            <div class="pron-tip">"Work AT" not "work IN". Use "an" before vowel sounds. Present simple for permanent jobs, not continuous.</div>
+      await addRaw(`<div class="call-card">
+        <div class="call-hero">
+          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
+          <div class="call-name">Sarah</div>
+          <div class="call-role">Business English Coach</div>
+          <div class="call-status"><div class="call-status-dot"></div> Listening</div>
+          <div class="call-timer">01:23</div>
+        </div>
+        <div class="call-transcript">
+          <div class="call-transcript-label">Live Transcript</div>
+          <div class="call-transcript-you">You said:</div>
+          <div class="call-transcript-user">"Hello, I am Rahul. I am working in IT company in Ahmedabad."</div>
+          <div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div>
+          <div class="call-transcript-text">Good start, Rahul! Small tip — instead of "I am working in IT company", try: <strong>"I work at an IT company in Ahmedabad."</strong><br><br>What does your company do? Tell me about it.</div>
+        </div>
+        <div class="call-correction">
+          <div class="call-correction-label">✏️ Correction</div>
+          <div class="call-correction-text">
+            <strong>"I work at"</strong> not "I am working in"<br>
+            Use <strong>"an"</strong> before vowel sounds<br>
+            Present simple for permanent jobs
           </div>
-          <br>What does your company do? Tell me about it.
+        </div>
+        <div class="call-actions">
+          <button class="call-btn call-btn-listen" onclick="speakSlow('I work at an IT company in Ahmedabad.')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </button>
+          <button class="call-btn call-btn-mic" onclick="simulateSarahConvo2()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+          </button>
+          <button class="call-btn call-btn-end" onclick="goToState('back_to_menu')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+          </button>
         </div>
       </div>`, 0);
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="simulateSarahConvo2()">Continue conversation</span>
-      </div>`, 200);
       break;
 
     case 'j3_sarah_round2':
-      await addMsg('user', 'We are making software for hospitals. It is very good company, 200 peoples working.');
-      showTyping(); await wait(1200); hideTyping();
-      await addRaw(`<div class="sarah-msg">
-        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
-        <div class="bubble bubble-ai" style="flex:1;">
-          <strong>Sarah:</strong> Healthcare software, that's impressive! A few corrections:<br><br>
-          <strong>"We develop software for hospitals."</strong> ("develop" sounds more professional than "make")<br>
-          <button class="listen-btn" onclick="speakSlow('We develop software for hospitals.')" style="margin:4px 0;">${ICONS.play} Listen</button><br>
-          <strong>"It's a great company with 200 employees."</strong>
-          <button class="listen-btn" onclick="speakSlow('It\\'s a great company with 200 employees.')" style="margin:4px 0;">${ICONS.play} Listen</button>
-          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--secondary)">
-            <div class="pron-label">Key Fixes</div>
-            <div class="pron-ipa">/dɪˈvel.əp/ not "making" — more professional</div>
-            <div class="pron-tip"><strong>"People"</strong> is already plural — never say "peoples". <strong>"Employees"</strong> /ɪmˈplɔɪ.iːz/ is better than "people working" in business context.</div>
+      await addRaw(`<div class="call-card">
+        <div class="call-hero">
+          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
+          <div class="call-name">Sarah</div>
+          <div class="call-role">Business English Coach</div>
+          <div class="call-status"><div class="call-status-dot"></div> Listening</div>
+          <div class="call-timer">02:47</div>
+        </div>
+        <div class="call-transcript">
+          <div class="call-transcript-label">Live Transcript</div>
+          <div class="call-transcript-you">You said:</div>
+          <div class="call-transcript-user">"We are making software for hospitals. It is very good company, 200 peoples working."</div>
+          <div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div>
+          <div class="call-transcript-text">Healthcare software, that's impressive! A few corrections:<br><br><strong>"We develop software for hospitals."</strong><br><strong>"It's a great company with 200 employees."</strong><br><br>What sets your company apart?</div>
+        </div>
+        <div class="call-correction">
+          <div class="call-correction-label">✏️ Key Fixes</div>
+          <div class="call-correction-text">
+            <strong>"develop"</strong> not "making" — more professional<br>
+            <strong>"employees"</strong> not "peoples working"<br>
+            "People" is already plural — never "peoples"
           </div>
-          <br>That sounds like meaningful work! If I asked you at a conference, "What sets your company apart?" — how would you answer?
+        </div>
+        <div class="call-actions">
+          <button class="call-btn call-btn-listen" onclick="speakSlow('We develop software for hospitals. It is a great company with 200 employees.')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </button>
+          <button class="call-btn call-btn-mic" onclick="simulateSarahConvo3()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+          </button>
+          <button class="call-btn call-btn-end" onclick="goToState('back_to_menu')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+          </button>
         </div>
       </div>`, 0);
-      await addRaw(`<div class="chips">
-        <span class="chip" onclick="simulateSarahConvo3()">Continue conversation</span>
-      </div>`, 200);
       break;
 
     case 'j3_sarah_round3':
-      await addMsg('user', 'Our company is different because we are giving very fast service and our software is easy for using.');
-      showTyping(); await wait(1200); hideTyping();
-      await addRaw(`<div class="sarah-msg">
-        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
-        <div class="bubble bubble-ai" style="flex:1;">
-          <strong>Sarah:</strong> You're getting better, Rahul! Let me polish that:<br><br>
-          <strong>"What sets us apart is our fast service and user-friendly software."</strong>
-          <button class="listen-btn" onclick="speakSlow('What sets us apart is our fast service and user-friendly software.')" style="margin:6px 0;">${ICONS.play} Listen</button>
-          <div class="pron-popover" style="margin-top:8px;border-left-color:var(--sparkle)">
-            <div class="pron-label">Pronunciation Guide</div>
-            <div class="pron-ipa">/wɒt sets ʌs əˈpɑːrt ɪz aʊər fɑːst ˈsɜːr.vɪs ænd ˈjuː.zər ˈfrend.li ˈsɒft.weər/</div>
-            <div class="pron-tip"><strong>"User-friendly"</strong> — a powerful business English word! /ˈjuː.zər ˈfrend.li/. Also: "easy to use" not "easy for using".</div>
+      await addRaw(`<div class="call-card">
+        <div class="call-hero">
+          <div class="call-avatar">&#128105;&#8205;&#127979;</div>
+          <div class="call-name">Sarah</div>
+          <div class="call-role">Business English Coach</div>
+          <div class="call-status" style="color:var(--secondary)"><div class="call-status-dot" style="background:var(--secondary)"></div> Call ended · 3:42</div>
+        </div>
+        <div class="call-transcript">
+          <div class="call-transcript-label">Last exchange</div>
+          <div class="call-transcript-you">You said:</div>
+          <div class="call-transcript-user">"Our company is different because we are giving very fast service and our software is easy for using."</div>
+          <div class="call-transcript-speaker" style="margin-top:12px;">Sarah</div>
+          <div class="call-transcript-text">You're getting better, Rahul!<br><strong>"What sets us apart is our fast service and user-friendly software."</strong></div>
+        </div>
+        <div class="call-correction">
+          <div class="call-correction-label">✏️ Final Polish</div>
+          <div class="call-correction-text">
+            <strong>"What sets us apart"</strong> — great business phrase<br>
+            <strong>"user-friendly"</strong> not "easy for using"
           </div>
+        </div>
+        <div class="call-summary">
+          <div class="call-summary-title">Session Summary</div>
+          <div class="call-summary-item">✅ <strong>"I work at"</strong> instead of "I am working in"</div>
+          <div class="call-summary-item">✅ <strong>"We develop"</strong> instead of "We are making"</div>
+          <div class="call-summary-item">✅ <strong>"200 employees"</strong> not "200 peoples"</div>
+          <div class="call-summary-item">✅ <strong>"User-friendly"</strong> instead of "easy for using"</div>
+          <div class="call-summary-item">✅ <strong>"What sets us apart"</strong> — business power phrase</div>
+        </div>
+        <div class="call-actions">
+          <button class="call-btn call-btn-listen" onclick="speakSlow('What sets us apart is our fast service and user-friendly software.')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </button>
         </div>
       </div>`, 0);
-      await wait(600);
-      await addRaw(`<div class="sarah-msg">
-        <div class="sarah-avatar-sm">&#128105;&#8205;&#127979;</div>
-        <div class="bubble bubble-ai" style="flex:1;">
-          <strong>Sarah:</strong> Great conversation, Rahul! Here's your practice summary:
-          <div style="background:rgba(0,0,0,0.04);border-radius:var(--radius-sm);padding:12px;margin-top:8px;">
-            <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:8px;">Session Summary</div>
-            <div style="font-size:13px;line-height:1.8;color:var(--grey-100);">
-              ${ICONS.success} <strong>"I work at"</strong> instead of "I am working in"<br>
-              ${ICONS.success} <strong>"We develop"</strong> instead of "We are making"<br>
-              ${ICONS.success} <strong>"200 employees"</strong> not "200 peoples"<br>
-              ${ICONS.success} <strong>"User-friendly"</strong> instead of "easy for using"<br>
-              ${ICONS.success} <strong>"What sets us apart"</strong> — great business phrase
-            </div>
-          </div>
-        </div>
-      </div>`, 400);
       await addRaw(`<div class="chips" style="margin-top:12px;">
         <span class="chip" onclick="goToState('back_to_menu')">Back to menu</span>
         <span class="chip" onclick="goToState('j3_companions')">Practice with someone else</span>
