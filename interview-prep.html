@@ -448,38 +448,38 @@ function handleSend() { /* placeholder for input bar send */ }
 const questions = [
   {
     hindi: "Kya aapke paas valid driving license aur ek bharosemand two-wheeler hai?",
-    rubric: "Role Knowledge",
-    rubricHindi: "Job ki Jaankaari",
+    rubric: "Eligibility",
+    rubricHindi: "Yogyata",
     number: 1
   },
   {
     hindi: "Aap delivery ke liye pahunchte hain lekin lift kharab hai, 4th floor hai. Customer neeche aane se mana karta hai. Aap kya karenge?",
-    rubric: "Honesty",
-    rubricHindi: "Imaandaari",
+    rubric: "Problem Solving",
+    rubricHindi: "Samajhdaari",
     number: 2
   },
   {
     hindi: "Bahut baarish ho rahi hai aur order 20 minute late hai. Customer phone pe chilla raha hai. Aap kya bolenge?",
-    rubric: "Communication",
-    rubricHindi: "Baat-cheet",
+    rubric: "Customer Handling",
+    rubricHindi: "Customer Handling",
     number: 3
   },
   {
     hindi: "Customer kehta hai khana gir gaya hai aur Cash on Delivery ka paisa dene se mana kar raha hai. Aap kya karenge?",
-    rubric: "Smart Thinking",
-    rubricHindi: "Samajhdaari",
+    rubric: "Process & Escalation",
+    rubricHindi: "Process Jaankaari",
     number: 4
   },
   {
     hindi: "Map pe address nahi mil raha aur customer phone nahi utha raha. Standard process kya hai?",
-    rubric: "Smart Thinking",
-    rubricHindi: "Samajhdaari",
+    rubric: "Navigation & SOP",
+    rubricHindi: "SOP Jaankaari",
     number: 5
   },
   {
     hindi: "Aap Swiggy mein delivery partner kyun banna chahte hain?",
-    rubric: "Role Knowledge",
-    rubricHindi: "Job ki Jaankaari",
+    rubric: "Motivation",
+    rubricHindi: "Motivation",
     number: 6
   }
 ];
@@ -551,19 +551,19 @@ async function goToState(state) {
         <div class="expect-sub">Interview mein yeh 4 cheezein test hongi:</div>
         <div class="expect-item">
           <div class="expect-icon" style="background:rgba(53,53,243,0.15);color:var(--primary)">${ICONS.briefcase}</div>
-          <div class="expect-item-text"><h5>Job ki Jaankaari</h5><p>Kya aapko kaam pata hai?</p></div>
+          <div class="expect-item-text"><h5>Yogyata & Motivation</h5><p>License, gaadi, aur kyun karna hai?</p></div>
         </div>
         <div class="expect-item">
           <div class="expect-icon" style="background:rgba(30,204,176,0.15);color:var(--sparkle)">${ICONS.brain}</div>
-          <div class="expect-item-text"><h5>Samajhdaari</h5><p>Kya aap problem solve kar sakte hain?</p></div>
+          <div class="expect-item-text"><h5>Problem Solving</h5><p>Mushkil situation mein kya karoge?</p></div>
         </div>
         <div class="expect-item">
-          <div class="expect-icon" style="background:rgba(247,171,32,0.15);color:var(--secondary)">${ICONS.shield}</div>
-          <div class="expect-item-text"><h5>Imaandaari</h5><p>Kya aap sachche aur bharosemand hain?</p></div>
+          <div class="expect-icon" style="background:rgba(247,171,32,0.15);color:var(--secondary)">${ICONS.chat}</div>
+          <div class="expect-item-text"><h5>Customer Handling</h5><p>Gusse wale customer ko kaise sambhaloge?</p></div>
         </div>
         <div class="expect-item">
-          <div class="expect-icon" style="background:rgba(250,47,64,0.1);color:var(--error)">${ICONS.chat}</div>
-          <div class="expect-item-text"><h5>Baat-cheet</h5><p>Kya aap saaf bol sakte hain?</p></div>
+          <div class="expect-icon" style="background:rgba(250,47,64,0.1);color:var(--error)">${ICONS.shield}</div>
+          <div class="expect-item-text"><h5>Process & SOP</h5><p>Company ke rules pata hain?</p></div>
         </div>
       </div>`, 300);
       await addRaw(`<div class="chips">
@@ -624,15 +624,15 @@ async function goToState(state) {
         </div>
       </div>`, 0);
 
+      // Fire TTS immediately (don't await — let it load while UI renders)
+      speakHindi(q.hindi);
+
       // Question card
       await addRaw(`<div class="question-card">
         <div class="q-number">Sawaal ${q.number}</div>
         <div class="q-text">${q.hindi}</div>
         <div class="q-hint">Testing: ${q.rubric}</div>
       </div>`, 200);
-
-      // Speak the question in Hindi
-      speakHindi(q.hindi);
 
       // Mic button to answer
       await addRaw(`<div class="mic-area" id="answerMicArea">
