@@ -861,8 +861,46 @@ function disableChips() {
   });
 }
 
+// === Preload all TTS audio on page load ===
+async function preloadAllTTS() {
+  // Collect all texts that will need TTS
+  const textsToPreload = [
+    ...questions.map(q => q.hindi),
+    ...feedbackData.map(fb => fb.better)
+  ];
+
+  // Fire all requests in parallel (don't await sequentially)
+  const promises = textsToPreload.map(async (text) => {
+    if (ttsCache[text]) return; // already cached
+    try {
+      const res = await fetch(SARVAM_TTS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-subscription-key': SARVAM_API_KEY
+        },
+        body: JSON.stringify({
+          inputs: [text],
+          target_language_code: 'hi-IN',
+          speaker: 'priya',
+          model: 'bulbul:v3',
+          enable_preprocessing: true
+        })
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const b64 = data.audios && data.audios[0];
+      if (b64) ttsCache[text] = b64;
+    } catch (e) { /* silently skip failed preloads */ }
+  });
+
+  await Promise.allSettled(promises);
+  console.log('TTS preload done:', Object.keys(ttsCache).length, 'clips cached');
+}
+
 // === Start ===
 goToState('welcome');
+preloadAllTTS(); // fire in background, doesn't block UI
 </script>
 
 </body>
