@@ -1301,8 +1301,7 @@ function showNotReady() {
 }
 
 function handleMicClick() {
-  // Show a hint
-  addMsg('ai', 'Tap the suggested prompts or the mic button inside the conversation to continue.');
+  openVoice();
 }
 
 function handleSend() {
@@ -1319,5 +1318,302 @@ function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 // === Init ===
 goToState('welcome');
 </script>
+
+<!-- ========== VOICE OVERLAY ========== -->
+<style>
+.voice-overlay{position:fixed;inset:0;z-index:9999;background:#fff;display:none;flex-direction:column;align-items:center;font-family:var(--font,'JioType',sans-serif)}
+.voice-overlay.open{display:flex}
+.vo-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.vo-close{width:40px;height:40px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.vo-close:active{background:#f0f0f0}
+.vo-close svg{width:24px;height:24px;color:#141414}
+.vo-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;width:100%;padding:0 24px;overflow-y:auto}
+.vo-dots{width:100px;height:100px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.vo-dot{border-radius:50%;animation:voPulse 1.6s ease-in-out infinite}
+.vo-dot:nth-child(1){background:#3535f3;animation-delay:0s}
+.vo-dot:nth-child(2){background:#f7ab20;animation-delay:.2s}
+.vo-dot:nth-child(3){background:#6464ff;animation-delay:.4s}
+.vo-dot:nth-child(4){background:#1eccb0;animation-delay:.6s}
+@keyframes voPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.85);opacity:.7}}
+.vo-dots--listening .vo-dot{animation:voListen .6s ease-in-out infinite alternate}
+@keyframes voListen{0%{transform:scale(.8);opacity:.6}100%{transform:scale(1.15);opacity:1}}
+.vo-dots--thinking .vo-dot{animation:voThink .8s ease-in-out infinite}
+@keyframes voThink{0%,100%{transform:scale(1)}50%{transform:scale(.6);opacity:.5}}
+.vo-label{font-size:18px;font-weight:700;color:#141414;text-align:center}
+.vo-sub{font-size:14px;color:rgba(25,27,30,.65);text-align:center}
+.vo-transcript{font-size:14px;color:#3535f3;font-style:italic;text-align:center;display:none;max-width:300px}
+.vo-response{display:none;width:100%;max-height:200px;overflow-y:auto;padding:12px 16px;border-radius:16px;background:#f5f5f5;font-size:14px;line-height:1.5;color:#141414}
+.vo-response p{margin-bottom:8px}
+.vo-actions{padding:24px;display:flex;gap:16px;align-items:center;justify-content:center}
+.vo-mic{width:64px;height:64px;border-radius:50%;border:none;background:#3535f3;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.vo-mic:active{transform:scale(.93)}
+.vo-mic svg{width:28px;height:28px;color:#fff}
+.vo-mic--pulse{animation:micPulse 1.5s infinite}
+@keyframes micPulse{0%{box-shadow:0 0 0 0 rgba(53,53,243,.4)}70%{box-shadow:0 0 0 15px rgba(53,53,243,0)}100%{box-shadow:0 0 0 0 rgba(53,53,243,0)}}
+.vo-stop{width:64px;height:64px;border-radius:50%;border:none;background:#fa2f40;cursor:pointer;display:none;align-items:center;justify-content:center}
+.vo-stop:active{transform:scale(.93)}
+.vo-stop svg{width:24px;height:24px;color:#fff}
+.vo-play{display:none;padding:10px 20px;border-radius:999px;border:none;background:#3900ad;color:#fff;font-family:var(--font);font-weight:700;font-size:14px;cursor:pointer}
+.vo-play:active{opacity:.85}
+.vo-hint{display:none;font-size:12px;color:rgba(25,27,30,.5);text-align:center}
+</style>
+
+<div class="voice-overlay" id="voiceOverlay">
+  <div class="vo-header">
+    <button class="vo-close" onclick="closeVoice()"><svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button class="vo-play" id="vPlayBtn" onclick="voicePlayLastTts()">Play response</button>
+  </div>
+  <div class="vo-body">
+    <div class="vo-dots" id="voiceDots"><div class="vo-dot"></div><div class="vo-dot"></div><div class="vo-dot"></div><div class="vo-dot"></div></div>
+    <div class="vo-label" id="voiceLabel">Hello!</div>
+    <div class="vo-sub" id="voiceSub">Tap the mic to start speaking</div>
+    <div class="vo-transcript" id="voiceTranscript"></div>
+    <div class="vo-response" id="voiceResponse"></div>
+    <div class="vo-hint" id="vAgainHint">Tap mic to ask another question</div>
+  </div>
+  <div class="vo-actions">
+    <button class="vo-mic" id="vMicBtn" onclick="voiceTapMic()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3z"/><path d="M19 10v2a7 7 0 01-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 19v3m-3 0h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button class="vo-stop" id="vStopBtn" onclick="voiceTapStop()"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+  </div>
+</div>
+
+<script>
+// ========== VOICE PIPELINE: STT → Anthropic → TTS ==========
+const CHAT_PROXY = 'https://jbiq-proxy.sunit3-sharma.workers.dev';
+const SARVAM_STT_URL = 'https://api.sarvam.ai/speech-to-text';
+
+let voiceChatHistory = [];
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let vState = 'closed';
+
+function setVoiceState(state) {
+  vState = state;
+  const dots = document.getElementById('voiceDots');
+  const label = document.getElementById('voiceLabel');
+  const sub = document.getElementById('voiceSub');
+  const transcript = document.getElementById('voiceTranscript');
+  const response = document.getElementById('voiceResponse');
+  const micBtn = document.getElementById('vMicBtn');
+  const stopBtn = document.getElementById('vStopBtn');
+  const playBtn = document.getElementById('vPlayBtn');
+  const hint = document.getElementById('vAgainHint');
+
+  dots.className = 'vo-dots' + (state === 'listening' ? ' vo-dots--listening' : state === 'thinking' || state === 'processing' ? ' vo-dots--thinking' : '');
+
+  switch (state) {
+    case 'idle':
+      label.textContent = 'Hello!'; sub.textContent = 'Tap the mic to start speaking'; sub.style.display = '';
+      transcript.style.display = 'none'; response.style.display = 'none'; response.innerHTML = '';
+      micBtn.style.display = 'flex'; micBtn.classList.remove('vo-mic--pulse');
+      stopBtn.style.display = 'none'; if (playBtn) playBtn.style.display = 'none'; hint.style.display = 'none';
+      break;
+    case 'listening':
+      label.textContent = 'Listening...'; sub.textContent = 'Tap the red button when done'; sub.style.display = '';
+      transcript.style.display = 'none'; response.style.display = 'none';
+      micBtn.style.display = 'none'; stopBtn.style.display = 'flex';
+      if (playBtn) playBtn.style.display = 'none'; hint.style.display = 'none';
+      break;
+    case 'processing':
+      label.textContent = 'Processing...'; sub.textContent = 'Converting speech to text'; sub.style.display = '';
+      micBtn.style.display = 'none'; stopBtn.style.display = 'none';
+      if (playBtn) playBtn.style.display = 'none'; hint.style.display = 'none';
+      break;
+    case 'thinking':
+      label.textContent = 'Thinking...'; sub.style.display = 'none';
+      micBtn.style.display = 'none'; stopBtn.style.display = 'none';
+      if (playBtn) playBtn.style.display = 'none'; hint.style.display = 'none';
+      break;
+    case 'speaking':
+      label.textContent = ''; sub.style.display = 'none';
+      micBtn.style.display = 'flex'; micBtn.classList.add('vo-mic--pulse');
+      stopBtn.style.display = 'none';
+      if (playBtn) playBtn.style.display = lastTtsBase64 ? 'block' : 'none';
+      hint.style.display = 'block';
+      break;
+  }
+}
+
+function openVoice() {
+  unlockAudio();
+  document.getElementById('voiceOverlay').classList.add('open');
+  setVoiceState('idle');
+}
+
+function closeVoice() {
+  killRecording();
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  document.getElementById('voiceOverlay').classList.remove('open');
+  vState = 'closed';
+}
+
+function voicePlayLastTts() {
+  unlockAudio();
+  if (lastTtsBase64) playTtsViaContext(lastTtsBase64);
+}
+
+function voiceTapMic() {
+  unlockAudio();
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  startVoiceRecording();
+}
+
+function voiceTapStop() {
+  if (isRecording) killRecording();
+}
+
+async function startVoiceRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (audioChunks.length === 0) { setVoiceState('idle'); return; }
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      await processVoice(blob);
+    };
+    mediaRecorder.start();
+    isRecording = true;
+    setVoiceState('listening');
+  } catch (err) {
+    console.error('Mic error:', err);
+    document.getElementById('voiceLabel').textContent = 'Mic access denied';
+    document.getElementById('voiceSub').textContent = 'Please allow microphone access';
+    document.getElementById('voiceSub').style.display = '';
+    document.getElementById('vMicBtn').style.display = 'flex';
+  }
+}
+
+function killRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+  isRecording = false;
+}
+
+async function processVoice(audioBlob) {
+  setVoiceState('processing');
+  try {
+    const wavBlob = await convertToWav(audioBlob);
+    const fd = new FormData();
+    fd.append('file', wavBlob, 'audio.wav');
+    fd.append('model', 'saaras:v3');
+    fd.append('language_code', 'unknown');
+    fd.append('mode', 'transcribe');
+
+    const sttResp = await fetch(SARVAM_STT_URL, {
+      method: 'POST',
+      headers: { 'api-subscription-key': SARVAM_API_KEY },
+      body: fd
+    });
+    if (!sttResp.ok) throw new Error('Speech recognition failed: ' + sttResp.status);
+    const sttData = await sttResp.json();
+    const transcript = (sttData.transcript || '').trim();
+    const detectedLang = sttData.language_code || 'en';
+
+    if (!transcript) {
+      document.getElementById('voiceLabel').textContent = "Didn't catch that";
+      document.getElementById('voiceSub').textContent = 'Tap mic to try again';
+      document.getElementById('voiceSub').style.display = '';
+      document.getElementById('vMicBtn').style.display = 'flex';
+      document.getElementById('vStopBtn').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('voiceTranscript').textContent = '"' + transcript + '"';
+    document.getElementById('voiceTranscript').style.display = 'block';
+
+    setVoiceState('thinking');
+
+    voiceChatHistory.push({ role: 'user', content: transcript });
+    const aiText = await callAnthropic(voiceChatHistory);
+    voiceChatHistory.push({ role: 'assistant', content: aiText });
+
+    setVoiceState('speaking');
+
+    const respEl = document.getElementById('voiceResponse');
+    respEl.style.display = 'block';
+    respEl.innerHTML = '<p>' + aiText.replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+
+    speakWithSarvam(aiText, detectedLang);
+
+  } catch (err) {
+    console.error('Voice error:', err);
+    document.getElementById('voiceLabel').textContent = 'Something went wrong';
+    document.getElementById('voiceSub').textContent = err.message || 'Tap mic to try again';
+    document.getElementById('voiceSub').style.display = '';
+    document.getElementById('vMicBtn').style.display = 'flex';
+    document.getElementById('vStopBtn').style.display = 'none';
+    if (voiceChatHistory.length > 0 && voiceChatHistory[voiceChatHistory.length - 1].role === 'user') voiceChatHistory.pop();
+  }
+}
+
+async function callAnthropic(messages) {
+  const resp = await fetch(CHAT_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages })
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || 'API error ' + resp.status);
+  return data.content[0].text;
+}
+
+async function speakWithSarvam(text, lang) {
+  const ttsLang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
+  const cleaned = text.replace(/[#*_`>\[\](){}|~]/g, '').replace(/\bhttps?:\/\/\S+/g, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  const shortText = cleaned.substring(0, 500);
+  if (!shortText) return;
+  try {
+    const ttsResp = await fetch(SARVAM_TTS_URL, {
+      method: 'POST',
+      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inputs: [shortText], target_language_code: ttsLang, speaker: 'anushka', model: 'bulbul:v2' })
+    });
+    const ttsData = await ttsResp.json();
+    if (ttsData.audios && ttsData.audios[0]) {
+      lastTtsBase64 = ttsData.audios[0];
+      const vPlay = document.getElementById('vPlayBtn');
+      if (vPlay) vPlay.style.display = 'block';
+      playTtsViaContext(lastTtsBase64);
+    }
+  } catch (e) {
+    console.error('TTS fetch error:', e);
+    browserSpeak(text);
+  }
+}
+
+async function convertToWav(webmBlob) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx.decodeAudioData(reader.result).then(audioBuffer => {
+        const numCh = audioBuffer.numberOfChannels;
+        const sampleRate = audioBuffer.sampleRate;
+        const length = audioBuffer.length;
+        const buffer = new ArrayBuffer(44 + length * 2);
+        const view = new DataView(buffer);
+        const writeStr = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+        writeStr(0, 'RIFF'); view.setUint32(4, 36 + length * 2, true); writeStr(8, 'WAVE');
+        writeStr(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+        writeStr(36, 'data'); view.setUint32(40, length * 2, true);
+        const channel = audioBuffer.getChannelData(0);
+        let offset = 44;
+        for (let i = 0; i < length; i++, offset += 2) {
+          const s = Math.max(-1, Math.min(1, channel[i]));
+          view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+        resolve(new Blob([buffer], { type: 'audio/wav' }));
+      }).catch(() => resolve(webmBlob));
+    };
+    reader.readAsArrayBuffer(webmBlob);
+  });
+}
+</script>
+
 </body>
 </html>
