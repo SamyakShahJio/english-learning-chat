@@ -214,11 +214,18 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
 /* Listen button */
 .listen-btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
-  border-radius: var(--radius-pill); background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2); color: var(--white); font-size: 11px;
+  border-radius: var(--radius-pill); background: var(--primary);
+  border: 1px solid var(--primary); color: var(--white); font-size: 11px;
   font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
 }
-.listen-btn:hover { background: rgba(255,255,255,0.2); }
+.listen-btn:hover { background: var(--primary-dark); }
+/* Invert listen button inside dark containers */
+.correction-card .listen-btn, .vocab-card .listen-btn {
+  background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3);
+}
+.correction-card .listen-btn:hover, .vocab-card .listen-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
 
 /* Icon buttons */
 .icon-btn {
