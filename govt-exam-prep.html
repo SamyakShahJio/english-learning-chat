@@ -597,7 +597,8 @@ function showEntryChips() {
   addChips([
     { label: "Help me find the right exam", action: "career_discovery" },
     { label: "Practice GK Quiz", action: "mock_quiz" },
-    { label: "Study Polity Flashcards", action: "flashcards" }
+    { label: "Study Polity Flashcards", action: "flashcards" },
+    { label: "Learn a Concept", action: "audio_concept" }
   ]);
 }
 
@@ -1070,7 +1071,7 @@ function flipFlashcardWidget(index) {
 }
 
 function listenFlashcard(text) {
-  sarvamTTS(text, 0.9);
+  sarvamTTS(text, 1.15);
 }
 
 function finishFlashcards() {
@@ -1132,7 +1133,7 @@ function playAudioConcept(btn) {
   btn.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16z"/></svg> Playing...</span>';
   btn.style.pointerEvents = 'none';
 
-  sarvamTTS("Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.", 0.9);
+  sarvamTTS("Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.", 1.15);
 
   // Reset after ~15 seconds
   setTimeout(() => {
