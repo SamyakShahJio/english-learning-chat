@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microlearning - Chat Prototype</title>
+<!-- jbiq:v3.5.0:sunit1986 -->
+<style>
+@font-face { font-family: 'JioType'; font-weight: 400; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeVarW05-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'JioType'; font-weight: 500; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Medium.woff2') format('woff2'); }
+@font-face { font-family: 'JioType'; font-weight: 700; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'JioType'; font-weight: 900; src: url('https://raw.githubusercontent.com/sunit1986/JioBharatIQ_Server/main/assets/fonts/woff2/JioTypeW05-Black.woff2') format('woff2'); }
+
+:root {
+  --primary: #3535f3;
+  --primary-light: #e8e8fc;
+  --primary-dark: #3900ad;
+  --secondary: #f7ab20;
+  --sparkle: #1eccb0;
+  --error: #fa2f40;
+  --warning: #f06d0f;
+  --success: #25ab21;
+  --grey-100: #141414;
+  --grey-80: #5c5c5c;
+  --grey-60: #8f8f8f;
+  --grey-40: #e0e0e0;
+  --grey-20: #f5f5f5;
+  --surface-ghost: #eeeeef;
+  --surface-bold: #3900ad;
+  --white: #ffffff;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 23px;
+  --radius-pill: 999px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'JioType'; background: var(--grey-20); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
+
+.phone-frame {
+  width: 100%; max-width: 420px; height: 900px; background: var(--white);
+  border-radius: 54px; border: 12px solid var(--grey-100);
+  position: relative; overflow: hidden; box-shadow: 0 60px 120px -30px rgba(0,0,0,0.3);
+}
+
+.notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 150px; height: 34px; background: var(--grey-100);
+  border-radius: 0 0 24px 24px; z-index: 100;
+}
+.notch-pill { width: 50px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 99px; position: absolute; top: 14px; left: 50%; transform: translateX(-50%); }
+
+.status-bar {
+  height: 50px; padding: 0 28px; display: flex; justify-content: space-between; align-items: center;
+  position: relative; z-index: 90; font-size: 14px; font-weight: 700; color: var(--grey-100);
+}
+.battery { width: 28px; height: 14px; border: 2px solid var(--grey-60); border-radius: 4px; position: relative; }
+.battery::after { content: ''; position: absolute; right: -5px; top: 3px; width: 3px; height: 6px; background: var(--grey-60); border-radius: 0 2px 2px 0; }
+.battery-fill { width: 70%; height: 100%; background: var(--grey-100); border-radius: 2px; }
+
+.chat-header {
+  height: 56px; padding: 0 16px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--grey-40); background: var(--white); position: relative; z-index: 80;
+}
+.chat-header-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.chat-header-info h3 { font-size: 16px; font-weight: 700; color: var(--grey-100); line-height: 1.2; }
+.chat-header-info span { font-size: 12px; color: var(--success); font-weight: 500; }
+
+.chat-area {
+  flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 8px;
+  display: flex; flex-direction: column; gap: 12px;
+  scroll-behavior: smooth; background: var(--white);
+}
+.chat-area::-webkit-scrollbar { width: 0; }
+.chat-body { display: flex; flex-direction: column; height: calc(900px - 50px - 56px - 68px); }
+
+.msg { max-width: 88%; animation: msgIn 0.35s ease-out; }
+.msg-ai { align-self: flex-start; }
+.msg-user { align-self: flex-end; }
+.msg-full { max-width: 100%; }
+
+.bubble {
+  padding: 12px 16px; font-size: 14px; line-height: 1.5; color: var(--grey-100);
+  word-wrap: break-word;
+}
+.bubble-ai {
+  background: var(--surface-ghost); border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
+}
+.bubble-user {
+  background: var(--primary); color: var(--white);
+  border-radius: var(--radius-lg) 4px var(--radius-lg) var(--radius-lg);
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chip {
+  padding: 8px 16px; border-radius: var(--radius-pill); border: 1.5px solid var(--primary);
+  color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer;
+  background: var(--white); transition: all 0.2s;
+}
+.chip:hover, .chip:active { background: var(--primary); color: var(--white); }
+.chip-disabled {
+  border-color: var(--grey-40); color: var(--grey-60); cursor: default; opacity: 0.38;
+}
+.chip-disabled:hover, .chip-disabled:active { background: var(--white); color: var(--grey-60); }
+
+/* Progress bar */
+.progress-bar-container {
+  background: var(--grey-40); border-radius: var(--radius-pill); height: 6px;
+  width: 100%; margin-top: 8px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--primary); border-radius: var(--radius-pill);
+  transition: width 0.5s ease;
+}
+
+/* Concept card */
+.concept-card {
+  background: var(--grey-100); border-radius: var(--radius-lg); overflow: hidden;
+  color: var(--white); margin-top: 8px;
+}
+.concept-card-img {
+  width: 100%; height: 140px; object-fit: cover; display: block; opacity: 0.8;
+}
+.concept-card-body { padding: 16px; }
+.concept-card-tag {
+  display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
+  background: var(--primary); color: var(--white); font-size: 10px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+}
+.concept-card h4 { font-size: 18px; font-weight: 900; margin-bottom: 6px; }
+.concept-card p { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+
+/* Roadmap card */
+.roadmap-card {
+  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
+  padding: 16px; margin-top: 8px;
+}
+.roadmap-card h4 { font-size: 16px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
+.roadmap-card .roadmap-sub { font-size: 12px; color: var(--grey-60); margin-bottom: 16px; }
+.roadmap-step {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border-radius: var(--radius-md); margin-bottom: 6px; transition: all 0.2s;
+}
+.roadmap-step.active { background: var(--primary); }
+.roadmap-step.locked { background: var(--surface-ghost); }
+.roadmap-num {
+  width: 28px; height: 28px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.roadmap-step.active .roadmap-num { background: var(--white); color: var(--primary); }
+.roadmap-step.locked .roadmap-num { background: var(--grey-40); color: var(--grey-60); }
+.roadmap-step-text h5 { font-size: 13px; font-weight: 700; }
+.roadmap-step-text p { font-size: 10px; }
+.roadmap-step.active .roadmap-step-text h5 { color: var(--white); }
+.roadmap-step.active .roadmap-step-text p { color: rgba(255,255,255,0.7); }
+.roadmap-step.locked .roadmap-step-text h5 { color: var(--grey-80); }
+.roadmap-step.locked .roadmap-step-text p { color: var(--grey-60); }
+.roadmap-step-icon { margin-left: auto; }
+.roadmap-step.active .roadmap-step-icon { color: var(--white); }
+.roadmap-step.locked .roadmap-step-icon { color: var(--grey-60); }
+
+/* Compare card */
+.compare-card {
+  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
+  padding: 16px; margin-top: 8px;
+}
+.compare-card h4 { font-size: 16px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
+.compare-card .compare-sub { font-size: 12px; color: var(--grey-60); margin-bottom: 16px; }
+.compare-item { margin-bottom: 16px; }
+.compare-label {
+  display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.compare-label.bad { background: rgba(250,47,64,0.1); color: var(--error); }
+.compare-label.good { background: rgba(37,171,33,0.1); color: var(--success); }
+.compare-img {
+  width: 100%; height: 100px; object-fit: cover; border-radius: var(--radius-md);
+  display: block;
+}
+.compare-item.bad .compare-img { opacity: 0.6; border: 2px solid rgba(250,47,64,0.3); }
+.compare-item.good .compare-img { border: 2px solid var(--success); }
+.compare-reason {
+  display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; font-size: 12px;
+}
+.compare-reason.bad { color: var(--error); }
+.compare-reason.good { color: var(--success); font-weight: 700; }
+
+/* Create form card */
+.create-card {
+  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
+  padding: 16px; margin-top: 8px;
+}
+.create-card h4 { font-size: 16px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
+.create-card .create-sub { font-size: 12px; color: var(--grey-60); margin-bottom: 16px; }
+.create-label { font-size: 10px; font-weight: 700; color: var(--grey-60); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.create-input {
+  width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1.5px solid var(--grey-40);
+  font-family: 'JioType'; font-size: 14px; color: var(--grey-100); background: var(--surface-ghost);
+  outline: none; transition: border-color 0.2s; margin-bottom: 12px;
+}
+.create-input:focus { border-color: var(--primary); }
+.create-input::placeholder { color: var(--grey-60); }
+.create-select {
+  width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1.5px solid var(--grey-40);
+  font-family: 'JioType'; font-size: 14px; color: var(--grey-100); background: var(--surface-ghost);
+  outline: none; margin-bottom: 12px; -webkit-appearance: none;
+}
+.create-row { display: flex; gap: 8px; }
+.create-row > div { flex: 1; }
+.create-btn {
+  width: 100%; padding: 12px; border-radius: var(--radius-xl); border: none;
+  background: var(--primary); color: var(--white); font-family: 'JioType';
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.create-btn:active { transform: scale(0.98); }
+.create-btn:disabled { background: var(--grey-40); color: var(--grey-60); cursor: default; }
+
+/* Result card */
+.result-card {
+  border-radius: var(--radius-lg); overflow: hidden; margin-top: 8px;
+  position: relative;
+}
+.result-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+.result-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+}
+.result-overlay h3 {
+  font-size: 22px; font-weight: 900; color: var(--white); text-transform: uppercase;
+  font-style: italic; letter-spacing: -0.5px; line-height: 1.1;
+}
+
+/* Quality check card */
+.quality-card {
+  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
+  padding: 16px; margin-top: 8px;
+}
+.quality-card h4 { font-size: 16px; font-weight: 900; color: var(--grey-100); margin-bottom: 12px; }
+.quality-check {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; background: var(--surface-ghost); border-radius: var(--radius-md);
+  margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--grey-80);
+}
+.quality-check .qc-status { display: flex; align-items: center; }
+.quality-check .qc-status.pending { color: var(--grey-60); }
+.quality-check .qc-status.pass { color: var(--success); }
+.quality-result {
+  margin-top: 12px; padding: 12px; border-radius: var(--radius-md);
+  background: rgba(37,171,33,0.08); border: 1px solid rgba(37,171,33,0.2);
+  text-align: center; font-size: 13px; font-weight: 700; color: var(--success);
+}
+
+/* Anchor card */
+.anchor-card {
+  background: var(--grey-100); border-radius: var(--radius-lg); padding: 20px;
+  color: var(--white); margin-top: 8px; position: relative; overflow: hidden;
+}
+.anchor-card::before {
+  content: ''; position: absolute; top: -20px; right: -20px; width: 120px; height: 120px;
+  background: var(--primary); border-radius: 50%; opacity: 0.2; filter: blur(30px);
+}
+.anchor-card h4 { font-size: 18px; font-weight: 900; margin-bottom: 8px; position: relative; }
+.anchor-card p { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 16px; position: relative; }
+.anchor-skill {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-md); padding: 12px; position: relative;
+}
+.anchor-skill-label { font-size: 10px; font-weight: 700; color: var(--sparkle); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.anchor-skill-text { font-size: 13px; font-weight: 500; color: var(--white); }
+
+/* Complete card */
+.complete-card {
+  background: var(--white); border: 1px solid var(--grey-40); border-radius: var(--radius-lg);
+  padding: 24px; margin-top: 8px; text-align: center; position: relative; overflow: hidden;
+}
+.complete-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--success), var(--primary), var(--secondary));
+}
+.complete-icon {
+  width: 64px; height: 64px; border-radius: 50%; background: var(--secondary);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(247,171,32,0.3);
+}
+.complete-card h3 { font-size: 22px; font-weight: 900; color: var(--grey-100); margin-bottom: 4px; }
+.complete-card .complete-sub { font-size: 13px; color: var(--grey-60); margin-bottom: 20px; }
+
+.plan-card {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius-lg); padding: 20px; color: var(--white); text-align: left;
+}
+.plan-card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
+.plan-card h4 { font-size: 18px; font-weight: 900; margin-bottom: 8px; }
+.plan-card p { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 16px; }
+.plan-cta {
+  width: 100%; padding: 12px; border-radius: var(--radius-md); border: none;
+  background: var(--white); color: var(--primary); font-family: 'JioType';
+  font-size: 14px; font-weight: 900; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; gap: 8px;
+}
+.plan-cta:active { transform: scale(0.98); }
+
+/* Listen button */
+.listen-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+  border-radius: var(--radius-pill); background: var(--primary);
+  border: 1px solid var(--primary); color: var(--white); font-size: 11px;
+  font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.listen-btn:hover { background: var(--primary-dark); }
+.listen-btn-dark {
+  background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3);
+}
+.listen-btn-dark:hover { background: rgba(255,255,255,0.25); }
+
+/* Input bar */
+.input-bar {
+  height: 68px; padding: 10px 12px; display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid var(--grey-40); background: var(--white); position: relative; z-index: 80;
+}
+.input-field {
+  flex: 1; height: 44px; border-radius: var(--radius-xl); background: var(--surface-ghost);
+  border: none; padding: 0 16px; font-family: 'JioType'; font-size: 14px; color: var(--grey-100);
+  outline: none;
+}
+.input-field::placeholder { color: var(--grey-60); }
+.send-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--primary); border: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+}
+.send-btn:active { transform: scale(0.9); }
+.mic-input-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--surface-ghost); border: none;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+}
+
+.home-indicator {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 4px; background: var(--grey-40); border-radius: 99px; z-index: 100;
+}
+
+/* Typing indicator */
+.typing { display: flex; gap: 4px; padding: 12px 16px; }
+.typing-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--grey-60);
+  animation: typingAnim 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-ghost) 25%, var(--grey-40) 50%, var(--surface-ghost) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-sm);
+}
+.skeleton-line { height: 14px; margin-bottom: 8px; }
+.skeleton-line:last-child { width: 60%; }
+
+/* Animations */
+@keyframes msgIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(250,47,64,0.4); } 50% { box-shadow: 0 0 0 16px rgba(250,47,64,0); } }
+@keyframes typingAnim { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes spinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+.fade-in { animation: msgIn 0.4s ease-out; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="notch"><div class="notch-pill"></div></div>
+
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="battery"><div class="battery-fill"></div></div>
+  </div>
+
+  <div class="chat-header">
+    <div class="chat-header-avatar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 12h-4a1 1 0 010-2h1v-3h-1a1 1 0 010-2h2a1 1 0 011 1v4h1a1 1 0 010 2z"/></svg>
+    </div>
+    <div class="chat-header-info">
+      <h3>Skill Coach</h3>
+      <span>Online</span>
+    </div>
+  </div>
+
+  <div class="chat-body">
+    <div class="chat-area" id="chatArea">
+      <!-- Messages rendered by JS -->
+    </div>
+    <div class="input-bar">
+      <button class="mic-input-btn" onclick="handleMicClick()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>
+      </button>
+      <input class="input-field" id="inputField" placeholder="Type karo..." readonly />
+      <button class="send-btn" onclick="handleSend()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M19.79 10.16l-14-6A2 2 0 005 4a2 2 0 00-1.965 2.398 2 2 0 00.355.792L6.76 12l-3.35 4.79a2 2 0 002.38 3.05l14-6a2 2 0 000-3.68z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+// === SVG Icon helpers ===
+const ICONS = {
+  mic: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3zm6-5a1 1 0 00-1 1v1a5 5 0 11-10 0v-1a1 1 0 10-2 0v1a7 7 0 1014 0v-1a1 1 0 00-1-1zm-3 10H9a1 1 0 000 2h6a1 1 0 000-2z"/></svg>',
+  check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5.21 7.71l-6 6a1.002 1.002 0 01-1.42 0l-3-3a1.003 1.003 0 111.42-1.42l2.29 2.3 5.29-5.3a1.004 1.004 0 011.42 1.42z"/></svg>',
+  warning: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 4.5a1 1 0 012 0v6a1 1 0 01-2 0v-6zm1 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>',
+  play: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.15 10.36l-10-7A2 2 0 008 3a1.88 1.88 0 00-.92.23A2 2 0 006 5v14a2 2 0 001.08 1.77c.282.154.599.233.92.23a2 2 0 001.15-.36l10-7a2 2 0 000-3.28z"/></svg>',
+  close: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3 5.71a1 1 0 00-1.42 0L12 10.59 7.12 5.71a1 1 0 10-1.42 1.42L10.59 12l-4.89 4.88a1 1 0 001.42 1.42L12 13.41l4.88 4.89a1 1 0 001.42-1.42L13.41 12l4.89-4.88a1 1 0 000-1.41z"/></svg>',
+  lock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>',
+  brain: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.22.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
+  star: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+  eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>',
+  chart: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>',
+  wand: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.996.996 0 00-1.41 0L1.29 18.96a.996.996 0 000 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.71 11.04a.996.996 0 000-1.41l-2.34-2.34zM5.71 20.59L3.41 18.3 10 11.71l2.3 2.3-6.59 6.58z"/></svg>',
+  notify: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
+  calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/></svg>',
+  spinner: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="animation:spinAnim 1s linear infinite"><path d="M12 4V2A10 10 0 002 12h2a8 8 0 018-8z"/></svg>',
+};
+
+// === Sarvam AI TTS ===
+const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
+const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
+let ttsAudio = null;
+let ttsCache = {};
+
+async function speakHindi(text) {
+  stopTTS();
+  if (ttsCache[text]) { playBase64Audio(ttsCache[text]); return; }
+  try {
+    const res = await fetch(SARVAM_TTS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
+      body: JSON.stringify({
+        inputs: [text],
+        target_language_code: 'hi-IN',
+        speaker: 'priya',
+        model: 'bulbul:v3',
+        enable_preprocessing: true
+      })
+    });
+    if (!res.ok) throw new Error('Sarvam API error: ' + res.status);
+    const data = await res.json();
+    const b64 = data.audios && data.audios[0];
+    if (b64) { ttsCache[text] = b64; playBase64Audio(b64); }
+  } catch (err) {
+    console.warn('Sarvam TTS failed, fallback:', err);
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'hi-IN'; utter.rate = 0.85;
+    speechSynthesis.speak(utter);
+  }
+}
+
+function playBase64Audio(base64) {
+  ttsAudio = new Audio('data:audio/wav;base64,' + base64);
+  ttsAudio.play().catch(err => console.warn('Audio play failed:', err));
+}
+
+function stopTTS() {
+  if (ttsAudio) { ttsAudio.pause(); ttsAudio.currentTime = 0; ttsAudio = null; }
+  speechSynthesis.cancel();
+}
+
+// === State Machine ===
+const chatArea = document.getElementById('chatArea');
+let currentState = 'welcome';
+let stateTransitioning = false;
+let createFormData = { subject: '', emotion: 'Shocked', text: '' };
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function addMsg(type, html, delay=0) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = `msg msg-${type} fade-in`;
+      div.innerHTML = `<div class="bubble bubble-${type}">${html}</div>`;
+      chatArea.appendChild(div);
+      scrollToBottom();
+      resolve();
+    }, delay);
+  });
+}
+
+function addRaw(html, delay=0) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'msg msg-ai msg-full fade-in';
+      div.innerHTML = html;
+      chatArea.appendChild(div);
+      scrollToBottom();
+      resolve();
+    }, delay);
+  });
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg msg-ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="bubble bubble-ai"><div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function showSkeleton() {
+  const div = document.createElement('div');
+  div.className = 'msg msg-ai msg-full';
+  div.id = 'skeleton-loader';
+  div.innerHTML = `<div style="padding:16px;background:var(--surface-ghost);border-radius:var(--radius-lg);">
+    <div class="skeleton skeleton-line" style="width:80%"></div>
+    <div class="skeleton skeleton-line" style="width:60%"></div>
+    <div class="skeleton skeleton-line" style="width:40%"></div>
+  </div>`;
+  chatArea.appendChild(div);
+  scrollToBottom();
+}
+
+function hideSkeleton() {
+  const el = document.getElementById('skeleton-loader');
+  if (el) el.remove();
+}
+
+function scrollToBottom() {
+  setTimeout(() => { chatArea.scrollTop = chatArea.scrollHeight; }, 50);
+}
+
+function handleMicClick() { /* placeholder */ }
+function handleSend() { /* placeholder */ }
+
+function disableChips() {
+  document.querySelectorAll('.chip').forEach(c => {
+    c.style.pointerEvents = 'none';
+    c.style.opacity = '0.38';
+  });
+}
+
+function showComingSoon() {
+  // Briefly flash a message
+  const el = document.createElement('div');
+  el.className = 'msg msg-ai fade-in';
+  el.innerHTML = `<div class="bubble bubble-ai" style="color:var(--grey-60);font-style:italic;">Yeh module jaldi aa raha hai!</div>`;
+  chatArea.appendChild(el);
+  scrollToBottom();
+  setTimeout(() => el.remove(), 2000);
+}
+
+// === State transitions ===
+async function goToState(state) {
+  if (stateTransitioning) return;
+  stateTransitioning = true;
+  currentState = state;
+
+  try { switch(state) {
+
+    case 'welcome':
+      showTyping();
+      await wait(800);
+      hideTyping();
+      await addMsg('ai', `Namaste Deepak! Main aapka Skill Coach hoon. Kya seekhna chahte ho aaj?`);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="selectPrompt('youtube')">Mere YouTube views kam hain</span>
+        <span class="chip chip-disabled" onclick="showComingSoon()">Mera Excel fix karo</span>
+        <span class="chip chip-disabled" onclick="showComingSoon()">Email likhna hai</span>
+      </div>`, 200);
+      break;
+
+    // === YOUTUBE VIEWS FLOW ===
+
+    case 'yt_problem':
+      disableChips();
+      await addMsg('user', 'Mere YouTube views kam hain');
+      showTyping();
+      await wait(1000);
+      hideTyping();
+      await addMsg('ai', `Main samajh sakta hoon. Yeh usually tab hota hai jab log aapka video dekhte hain par click nahi karte. Isko kehte hain <strong>Click-Through Rate (CTR)</strong> problem.`);
+      await wait(600);
+      showTyping();
+      await wait(800);
+      hideTyping();
+      await addMsg('ai', `Main aapke liye ek mini-course banata hoon. Pehle samjho ki CTR kya hai.`);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_ctr_explain')">CTR samjhao</span>
+        <span class="chip" onclick="goToState('yt_roadmap')">Seedha fix batao</span>
+      </div>`, 200);
+      break;
+
+    case 'yt_ctr_explain':
+      disableChips();
+      await addMsg('user', 'CTR samjhao');
+      showSkeleton();
+      await wait(1200);
+      hideSkeleton();
+
+      // Concept card with image
+      await addRaw(`<div class="concept-card">
+        <img class="concept-card-img" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop" alt="Analytics" />
+        <div class="concept-card-body">
+          <span class="concept-card-tag">Concept</span>
+          <h4>Click-Through Rate (CTR)</h4>
+          <p>CTR matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein = <strong>5% CTR</strong>.</p>
+          <div style="margin-top:12px;">
+            <button class="listen-btn listen-btn-dark" onclick="speakHindi('Click-Through Rate matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein toh 5 percent CTR hai.')">${ICONS.play} Suno Hindi mein</button>
+          </div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_roadmap')">Achha, ab fix batao</span>
+      </div>`, 300);
+      break;
+
+    case 'yt_roadmap':
+      disableChips();
+      await addMsg('user', 'Ab fix batao');
+      showTyping();
+      await wait(800);
+      hideTyping();
+      await addMsg('ai', `CTR fix karne ke liye 3 cheezein optimize karni hain. Aaj hum sabse important se shuru karte hain.`);
+
+      await addRaw(`<div class="roadmap-card">
+        <h4>3-Step Fix Plan</h4>
+        <div class="roadmap-sub">Aaj Thumbnail se shuru karte hain</div>
+        <div class="roadmap-step active">
+          <div class="roadmap-num">1</div>
+          <div class="roadmap-step-text">
+            <h5>Thumbnail</h5>
+            <p>Visual Hook (Aaj yeh karenge)</p>
+          </div>
+          <div class="roadmap-step-icon">${ICONS.play}</div>
+        </div>
+        <div class="roadmap-step locked">
+          <div class="roadmap-num">2</div>
+          <div class="roadmap-step-text">
+            <h5>Title</h5>
+            <p>Curiosity Gap</p>
+          </div>
+          <div class="roadmap-step-icon">${ICONS.lock}</div>
+        </div>
+        <div class="roadmap-step locked">
+          <div class="roadmap-num">3</div>
+          <div class="roadmap-step-text">
+            <h5>Topic</h5>
+            <p>Market Demand</p>
+          </div>
+          <div class="roadmap-step-icon">${ICONS.lock}</div>
+        </div>
+      </div>`, 300);
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_hook')">Thumbnail seekho</span>
+      </div>`, 200);
+      break;
+
+    case 'yt_hook':
+      disableChips();
+      await addMsg('user', 'Thumbnail seekho');
+      showSkeleton();
+      await wait(1000);
+      hideSkeleton();
+
+      // Progress
+      await addRaw(`<div style="margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 1 / 5</span>
+          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">THUMBNAIL</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" style="width:20%"></div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="concept-card">
+        <img class="concept-card-img" src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=600&auto=format&fit=crop" alt="Hook Concept" />
+        <div class="concept-card-body">
+          <span class="concept-card-tag">Concept: The Hook</span>
+          <h4>Scroll Rokne Wala Element</h4>
+          <p>Hook woh ek element hai jo scroll rokta hai. Yeh usually ek face ya massive contrast hota hai. Bina hook ke, design koi kaam nahi karega.</p>
+          <div style="margin-top:12px;">
+            <button class="listen-btn listen-btn-dark" onclick="speakHindi('Hook woh ek element hai jo scroll rokta hai. Yeh usually ek face ya massive contrast hota hai. Bina hook ke design koi kaam nahi karega.')">${ICONS.play} Suno Hindi mein</button>
+          </div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_prompting')">Aage badho</span>
+      </div>`, 300);
+      break;
+
+    case 'yt_prompting':
+      disableChips();
+      await addMsg('user', 'Aage badho');
+      showTyping();
+      await wait(600);
+      hideTyping();
+
+      // Progress
+      await addRaw(`<div style="margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 2 / 5</span>
+          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">PROMPTING</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" style="width:40%"></div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="concept-card">
+        <img class="concept-card-img" src="https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?q=80&w=600&auto=format&fit=crop" alt="Prompting" />
+        <div class="concept-card-body">
+          <span class="concept-card-tag">Concept: Prompting 101</span>
+          <h4>AI ko Kaise Bolo</h4>
+          <p>AI literal hai. Isko ek structured formula chahiye sahi result ke liye: <strong>[Subject] + [Action/Emotion]</strong>. Jitna specific, utna achha result.</p>
+          <div style="background:rgba(255,255,255,0.1);border-radius:var(--radius-sm);padding:10px;margin-top:12px;border:1px solid rgba(255,255,255,0.1);">
+            <div style="font-size:10px;font-weight:700;color:var(--sparkle);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Example Prompt</div>
+            <div style="font-size:13px;color:var(--white);">"Stressed chef in kitchen, shocked expression, cinematic lighting"</div>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="listen-btn listen-btn-dark" onclick="speakHindi('AI ko ek structured formula chahiye. Subject plus Action ya Emotion. Jitna specific bologe utna achha result milega.')">${ICONS.play} Suno Hindi mein</button>
+          </div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_compare')">Example dikhao</span>
+      </div>`, 300);
+      break;
+
+    case 'yt_compare':
+      disableChips();
+      await addMsg('user', 'Example dikhao');
+      showTyping();
+      await wait(600);
+      hideTyping();
+
+      // Progress
+      await addRaw(`<div style="margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 3 / 5</span>
+          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">GOOD vs BAD</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" style="width:60%"></div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="compare-card">
+        <h4>${ICONS.eye} Good vs. Bad Thumbnail</h4>
+        <div class="compare-sub">Pehchano ki kya achha kaam karta hai aur kya nahi</div>
+
+        <div class="compare-item bad">
+          <span class="compare-label bad">Bad Thumbnail</span>
+          <img class="compare-img" src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop" alt="Bad Example" />
+          <div class="compare-reason bad">
+            ${ICONS.close} <span>Boring, no face, no emotion, text too small — scroll past ho jaayega</span>
+          </div>
+        </div>
+
+        <div class="compare-item good">
+          <span class="compare-label good">Good Thumbnail</span>
+          <img class="compare-img" src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=600&auto=format&fit=crop" alt="Good Example" />
+          <div class="compare-reason good">
+            ${ICONS.check} <span>Clear hook, big contrast, readable on mobile — click milega!</span>
+          </div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_create')">Ab apna banao</span>
+      </div>`, 300);
+      break;
+
+    case 'yt_create':
+      disableChips();
+      await addMsg('user', 'Ab apna banao');
+      showTyping();
+      await wait(600);
+      hideTyping();
+      await addMsg('ai', `Ab apna thumbnail banate hain! Neeche form bharo — Subject, Emotion, aur Text.`);
+
+      // Progress
+      await addRaw(`<div style="margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 4 / 5</span>
+          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">CREATE</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" style="width:80%"></div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="create-card" id="createFormCard">
+        <h4>${ICONS.wand} Guided Creation</h4>
+        <div class="create-sub">Apna idea frame karo. Ek bold version try karo.</div>
+
+        <div class="create-label">Subject (Kaun/Kya?)</div>
+        <input class="create-input" id="createSubject" type="text" placeholder="e.g. Stressed chef in kitchen" oninput="updateCreateBtn()" />
+
+        <div class="create-row">
+          <div>
+            <div class="create-label">Emotion</div>
+            <select class="create-select" id="createEmotion">
+              <option value="Shocked">Shocked</option>
+              <option value="Angry">Angry</option>
+              <option value="Happy">Happy</option>
+            </select>
+          </div>
+          <div>
+            <div class="create-label">Vibe</div>
+            <select class="create-select" id="createVibe">
+              <option value="Cinematic">Cinematic</option>
+              <option value="Neon">Neon</option>
+              <option value="Natural">Natural</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="create-label">Overlay Text (Hook)</div>
+        <input class="create-input" id="createText" type="text" placeholder="e.g. SECRET REVEALED!" />
+
+        <button class="create-btn" id="createGenBtn" disabled onclick="generateThumbnail()">
+          ${ICONS.wand} Generate Karo
+        </button>
+      </div>`, 0);
+      break;
+
+    case 'yt_generating':
+      // Show skeleton while "generating"
+      showSkeleton();
+      await wait(2500);
+      hideSkeleton();
+      stateTransitioning = false;
+      goToState('yt_result');
+      return;
+
+    case 'yt_result':
+      const overlayText = createFormData.text || 'WATCH THIS!';
+
+      await addRaw(`<div class="result-card">
+        <img src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=600&auto=format&fit=crop" alt="Generated Thumbnail" />
+        <div class="result-overlay">
+          <h3>${overlayText}</h3>
+        </div>
+      </div>`, 0);
+
+      await wait(300);
+      await addMsg('ai', `Yeh raha aapka thumbnail! Ab quality check karte hain.`);
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_quality')">Quality Check Karo</span>
+      </div>`, 200);
+      break;
+
+    case 'yt_quality':
+      disableChips();
+      await addMsg('user', 'Quality Check Karo');
+
+      // Progress
+      await addRaw(`<div style="margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:10px;font-weight:700;color:var(--grey-60);text-transform:uppercase;letter-spacing:1px;">Step 5 / 5</span>
+          <span style="display:inline-block;padding:3px 10px;border-radius:var(--radius-pill);background:var(--primary-light);color:var(--primary);font-size:10px;font-weight:700;">QUALITY CHECK</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" style="width:90%"></div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="quality-card" id="qualityCard">
+        <h4>AI Quality Check</h4>
+        <div class="quality-check" id="qc1">
+          <span>Hook 2 second mein clear?</span>
+          <span class="qc-status pending" id="qc1-status">${ICONS.spinner}</span>
+        </div>
+        <div class="quality-check" id="qc2">
+          <span>Text mobile pe readable?</span>
+          <span class="qc-status pending" id="qc2-status">${ICONS.spinner}</span>
+        </div>
+        <div class="quality-check" id="qc3">
+          <span>Video topic se match?</span>
+          <span class="qc-status pending" id="qc3-status">${ICONS.spinner}</span>
+        </div>
+      </div>`, 0);
+
+      // Animate quality checks
+      await wait(1200);
+      document.getElementById('qc1-status').className = 'qc-status pass';
+      document.getElementById('qc1-status').innerHTML = ICONS.check;
+      document.getElementById('qc1-status').style.color = 'var(--success)';
+
+      await wait(1000);
+      document.getElementById('qc2-status').className = 'qc-status pass';
+      document.getElementById('qc2-status').innerHTML = ICONS.check;
+      document.getElementById('qc2-status').style.color = 'var(--success)';
+
+      await wait(1000);
+      document.getElementById('qc3-status').className = 'qc-status pass';
+      document.getElementById('qc3-status').innerHTML = ICONS.check;
+      document.getElementById('qc3-status').style.color = 'var(--success)';
+
+      await wait(500);
+      // Add result to quality card
+      const qCard = document.getElementById('qualityCard');
+      if (qCard) {
+        const resultDiv = document.createElement('div');
+        resultDiv.className = 'quality-result fade-in';
+        resultDiv.textContent = 'Yeh thumbnail clear, clickable, aur usable hai!';
+        qCard.appendChild(resultDiv);
+      }
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_anchor')">Confirm Karo</span>
+      </div>`, 400);
+      break;
+
+    case 'yt_anchor':
+      disableChips();
+      await addMsg('user', 'Confirm Karo');
+      showTyping();
+      await wait(600);
+      hideTyping();
+
+      await addRaw(`<div class="anchor-card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <div style="width:36px;height:36px;background:rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--sparkle);">${ICONS.brain}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--sparkle);text-transform:uppercase;letter-spacing:1px;">Why This Works</div>
+        </div>
+        <h4>Thumbnail = First Impression</h4>
+        <p>Jab log scroll karte hain, unka dimaag 2 second mein decide karta hai ki click karna hai ya nahi. Ek achha thumbnail woh decision jeetata hai — clear face, bold text, aur high contrast ke saath.</p>
+        <div class="anchor-skill">
+          <div class="anchor-skill-label">Transferable Skill</div>
+          <div class="anchor-skill-text">"Pehle 2 seconds mein dhyan kheenchna — yeh har visual content mein kaam aata hai."</div>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="listen-btn listen-btn-dark" onclick="speakHindi('Jab log scroll karte hain, unka dimaag 2 second mein decide karta hai ki click karna hai ya nahi. Ek achha thumbnail woh decision jeetata hai.')">${ICONS.play} Suno Hindi mein</button>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="goToState('yt_complete')">Samajh gaya, finish karo</span>
+      </div>`, 300);
+      break;
+
+    case 'yt_complete':
+      disableChips();
+      await addMsg('user', 'Samajh gaya, finish karo');
+      showTyping();
+      await wait(600);
+      hideTyping();
+
+      // Progress 100%
+      await addRaw(`<div style="margin-top:4px;">
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" style="width:100%;background:var(--success);"></div>
+        </div>
+      </div>`, 0);
+
+      await addRaw(`<div class="complete-card">
+        <div class="complete-icon">${ICONS.star}</div>
+        <h3>Momentum Ban Gaya!</h3>
+        <div class="complete-sub">Aapne Step 1 master kar liya. Ab rukna mat.</div>
+
+        <div class="plan-card">
+          <div class="plan-card-label">UP NEXT</div>
+          <h4>7-Din Creator Plan</h4>
+          <p>Maine aapke liye ek personalized schedule banaya hai — Titles, Tags, aur Editing next week tak master karo.</p>
+          <button class="plan-cta" onclick="restartFlow()">
+            ${ICONS.notify} Plan Activate Karo
+          </button>
+        </div>
+      </div>`, 0);
+
+      await wait(400);
+      await addRaw(`<div class="chips">
+        <span class="chip" onclick="restartFlow()">Dobara shuru karo</span>
+      </div>`, 200);
+      break;
+
+  } } finally { stateTransitioning = false; }
+}
+
+// === User actions ===
+function selectPrompt(type) {
+  disableChips();
+  if (type === 'youtube') {
+    goToState('yt_problem');
+  }
+}
+
+function updateCreateBtn() {
+  const subject = document.getElementById('createSubject');
+  const btn = document.getElementById('createGenBtn');
+  if (subject && btn) {
+    btn.disabled = !subject.value.trim();
+  }
+}
+
+function generateThumbnail() {
+  const subject = document.getElementById('createSubject');
+  const emotion = document.getElementById('createEmotion');
+  const text = document.getElementById('createText');
+  createFormData.subject = subject ? subject.value : '';
+  createFormData.emotion = emotion ? emotion.value : 'Shocked';
+  createFormData.text = text ? text.value : '';
+
+  // Disable form
+  const card = document.getElementById('createFormCard');
+  if (card) {
+    card.querySelectorAll('input,select,button').forEach(el => el.disabled = true);
+  }
+
+  // Show user message
+  addMsg('user', `Subject: ${createFormData.subject}, ${createFormData.emotion}`).then(() => {
+    goToState('yt_generating');
+  });
+}
+
+function restartFlow() {
+  disableChips();
+  chatArea.innerHTML = '';
+  stateTransitioning = false;
+  goToState('welcome');
+}
+
+// === Start ===
+goToState('welcome');
+</script>
+
+</body>
+</html>
