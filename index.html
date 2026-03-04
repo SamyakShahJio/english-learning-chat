@@ -53,6 +53,13 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
   height: 56px; padding: 0 16px; display: flex; align-items: center; gap: 12px;
   border-bottom: 1px solid var(--grey-40); background: var(--white); position: relative; z-index: 80;
 }
+.back-btn {
+  width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; color: var(--grey-100); flex-shrink: 0;
+}
+.back-btn:hover { background: var(--surface-ghost); }
+.back-btn:active { transform: scale(0.9); }
 .chat-header-avatar {
   width: 36px; height: 36px; border-radius: 50%; background: var(--primary);
   display: flex; align-items: center; justify-content: center;
@@ -324,6 +331,9 @@ body { font-family: 'JioType'; background: var(--grey-20); display: flex; justif
   </div>
 
   <div class="chat-header">
+    <button class="back-btn" onclick="window.location.href='career.html'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11H7.83l4.88-4.88a1.008 1.008 0 00-1.42-1.42l-6.59 6.59a1 1 0 000 1.42l6.59 6.59a1.002 1.002 0 001.639-.325 1 1 0 00-.22-1.095L7.83 13H19a1 1 0 000-2z"/></svg>
+    </button>
     <div class="chat-header-avatar">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z"/></svg>
     </div>
