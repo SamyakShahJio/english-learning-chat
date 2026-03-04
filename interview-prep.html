@@ -593,10 +593,10 @@ async function goToState(state) {
         <div class="q-hint">Testing: ${q.rubric}</div>
       </div>`, 200);
 
-      // Mic button to answer
-      await addRaw(`<div class="mic-area" id="answerMicArea">
+      // Mic button to answer (unique ID per question to avoid DOM collision)
+      await addRaw(`<div class="mic-area" id="answerMicArea-${questionIndex}">
         <div class="mic-label">Jawab dene ke liye mic dabao</div>
-        <button class="mic-btn-large" id="answerMicBtn" onclick="simulateRecording()">
+        <button class="mic-btn-large" id="answerMicBtn-${questionIndex}" onclick="simulateRecording(${questionIndex})">
           ${ICONS.mic}
         </button>
         <div class="mic-label-muted">Tap karke bolo</div>
@@ -708,8 +708,8 @@ function startQuestions() {
   addMsg('user', 'Shuru karo').then(() => goToState('ask_question'));
 }
 
-function simulateRecording() {
-  const btn = document.getElementById('answerMicBtn');
+function simulateRecording(qIdx) {
+  const btn = document.getElementById('answerMicBtn-' + qIdx);
   if (!btn) return;
   stopTTS(); // Stop TTS if still speaking
   btn.classList.add('recording');
@@ -718,7 +718,7 @@ function simulateRecording() {
     <div style="width:3px;background:white;border-radius:99px;animation:waveAnim 1.2s infinite;height:16px;"></div>
     <div style="width:3px;background:white;border-radius:99px;animation:waveAnim 0.8s infinite;height:12px;"></div>
   </div>`;
-  const area = document.getElementById('answerMicArea');
+  const area = document.getElementById('answerMicArea-' + qIdx);
   if (area) {
     const label = area.querySelector('.mic-label');
     if (label) { label.textContent = 'Recording...'; label.style.color = 'var(--error)'; }
@@ -726,24 +726,24 @@ function simulateRecording() {
     if (sub) sub.textContent = 'Rokne ke liye dobara dabao';
   }
 
-  btn.onclick = function() { finishRecording(); };
+  btn.onclick = function() { finishRecording(qIdx); };
 
   // Auto-stop after 4 seconds
   setTimeout(() => {
     if (btn.classList.contains('recording')) {
-      finishRecording();
+      finishRecording(qIdx);
     }
   }, 4000);
 }
 
-function finishRecording() {
-  const btn = document.getElementById('answerMicBtn');
+function finishRecording(qIdx) {
+  const btn = document.getElementById('answerMicBtn-' + qIdx);
   if (!btn) return;
   btn.classList.remove('recording');
   btn.innerHTML = ICONS.check;
   btn.style.background = 'var(--success)';
   btn.onclick = null;
-  const area = document.getElementById('answerMicArea');
+  const area = document.getElementById('answerMicArea-' + qIdx);
   if (area) {
     const label = area.querySelector('.mic-label');
     if (label) { label.textContent = 'Record ho gaya'; label.style.color = 'var(--success)'; }
