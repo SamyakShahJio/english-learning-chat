@@ -398,7 +398,7 @@ const ICONS = {
   sparkle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>',
 };
 
-// === Sarvam AI Text-to-Speech Engine (AudioContext unlock pattern) ===
+// === Sarvam AI Text-to-Speech Engine (robust AudioContext + fallback) ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 const SARVAM_SPEAKER = 'anushka';
@@ -408,41 +408,56 @@ let playbackCtx = null;
 let lastTtsBase64 = null;
 
 function unlockAudio() {
-  if (playbackCtx) return;
   try {
-    playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
-    playbackCtx.resume();
+    if (!playbackCtx) {
+      playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (playbackCtx.state === 'suspended') playbackCtx.resume();
   } catch(e) { console.warn('AudioContext:', e); }
 }
+
 function base64ToArrayBuffer(b64) {
   const bin = atob(b64); const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes.buffer;
 }
+
+function playAudioFallback(base64) {
+  const audio = new Audio('data:audio/wav;base64,' + base64);
+  if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+  currentAudio = audio;
+  audio.play().catch(() => {});
+}
+
 function playTtsViaContext(base64) {
-  if (!playbackCtx || !base64) return;
+  unlockAudio();
+  if (!base64) return;
+  if (!playbackCtx) { playAudioFallback(base64); return; }
   try {
     playbackCtx.resume();
-    playbackCtx.decodeAudioData(base64ToArrayBuffer(base64)).then(buf => {
+    const ab = base64ToArrayBuffer(base64);
+    playbackCtx.decodeAudioData(ab.slice(0)).then(buf => {
       const src = playbackCtx.createBufferSource();
       src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
-    }).catch(e => console.error('decodeAudioData:', e));
-  } catch(e) { console.error('playTtsViaContext:', e); }
+    }).catch(e => {
+      console.warn('decodeAudioData failed, using Audio fallback:', e);
+      playAudioFallback(base64);
+    });
+  } catch(e) {
+    console.warn('AudioContext play failed, using Audio fallback:', e);
+    playAudioFallback(base64);
+  }
 }
-document.addEventListener('click', unlockAudio, { once: true });
-document.addEventListener('touchstart', unlockAudio, { once: true });
+
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
 
 async function sarvamTTS(text, pace = 1.0) {
+  unlockAudio();
   const cacheKey = text + '|' + pace;
   if (ttsCache.has(cacheKey)) {
     lastTtsBase64 = ttsCache.get(cacheKey);
-    if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
-    else {
-      const audio = new Audio('data:audio/wav;base64,' + lastTtsBase64);
-      if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-      currentAudio = audio;
-      audio.play().catch(() => {});
-    }
+    playTtsViaContext(lastTtsBase64);
     return;
   }
   try {
@@ -461,13 +476,7 @@ async function sarvamTTS(text, pace = 1.0) {
     if (data.audios && data.audios[0]) {
       lastTtsBase64 = data.audios[0];
       ttsCache.set(cacheKey, lastTtsBase64);
-      if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
-      else {
-        const audio = new Audio('data:audio/wav;base64,' + lastTtsBase64);
-        if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-        currentAudio = audio;
-        audio.play().catch(() => {});
-      }
+      playTtsViaContext(lastTtsBase64);
     }
   } catch (e) {
     console.warn('Sarvam TTS failed:', e);

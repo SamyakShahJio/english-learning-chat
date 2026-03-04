@@ -500,7 +500,7 @@ const ICONS = {
   arrowRight: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
 };
 
-// === Sarvam AI TTS with pre-caching (AudioContext unlock pattern) ===
+// === Sarvam AI TTS with pre-caching (robust AudioContext + fallback) ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 let ttsAudio = null;
@@ -509,29 +509,47 @@ let playbackCtx = null;
 let lastTtsBase64 = null;
 
 function unlockAudio() {
-  if (playbackCtx) return;
   try {
-    playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
-    playbackCtx.resume();
+    if (!playbackCtx) {
+      playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (playbackCtx.state === 'suspended') playbackCtx.resume();
   } catch(e) { console.warn('AudioContext:', e); }
 }
+
 function base64ToArrayBuffer(b64) {
   const bin = atob(b64); const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes.buffer;
 }
+
+function playBase64Audio(base64) {
+  ttsAudio = new Audio('data:audio/wav;base64,' + base64);
+  ttsAudio.play().catch(() => {});
+}
+
 function playTtsViaContext(base64) {
-  if (!playbackCtx || !base64) return;
+  unlockAudio();
+  if (!base64) return;
+  if (!playbackCtx) { playBase64Audio(base64); return; }
   try {
     playbackCtx.resume();
-    playbackCtx.decodeAudioData(base64ToArrayBuffer(base64)).then(buf => {
+    const ab = base64ToArrayBuffer(base64);
+    playbackCtx.decodeAudioData(ab.slice(0)).then(buf => {
       const src = playbackCtx.createBufferSource();
       src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
-    }).catch(e => console.error('decodeAudioData:', e));
-  } catch(e) { console.error('playTtsViaContext:', e); }
+    }).catch(e => {
+      console.warn('decodeAudioData failed, using Audio fallback:', e);
+      playBase64Audio(base64);
+    });
+  } catch(e) {
+    console.warn('AudioContext play failed, using Audio fallback:', e);
+    playBase64Audio(base64);
+  }
 }
-document.addEventListener('click', unlockAudio, { once: true });
-document.addEventListener('touchstart', unlockAudio, { once: true });
+
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
 
 const TTS_TEXTS = {
   ctr: 'Click-Through Rate matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein toh 5 percent CTR hai.',
@@ -565,10 +583,10 @@ preCacheTTS();
 
 async function speakHindi(text) {
   stopTTS();
+  unlockAudio();
   if (ttsCache[text]) {
     lastTtsBase64 = ttsCache[text];
-    if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
-    else { playBase64Audio(lastTtsBase64); }
+    playTtsViaContext(lastTtsBase64);
     return;
   }
   try {
@@ -590,19 +608,13 @@ async function speakHindi(text) {
     if (b64) {
       ttsCache[text] = b64;
       lastTtsBase64 = b64;
-      if (playbackCtx) { playTtsViaContext(b64); }
-      else { playBase64Audio(b64); }
+      playTtsViaContext(b64);
     }
   } catch (err) {
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'hi-IN'; utter.rate = 0.85;
     speechSynthesis.speak(utter);
   }
-}
-
-function playBase64Audio(base64) {
-  ttsAudio = new Audio('data:audio/wav;base64,' + base64);
-  ttsAudio.play().catch(() => {});
 }
 
 function stopTTS() {
