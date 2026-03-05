@@ -76,39 +76,96 @@ a{text-decoration:none;color:inherit}
 .explore-chip .emoji{font-size:25px;line-height:1.3}
 .explore-chip .label{font-size:14px;font-weight:400;color:var(--text-high);line-height:1}
 
-/* MULTI-MODAL CHAT INPUT */
+/* ─── BOTTOM INPUT WIDGET (per BOTTOM-BAR-AND-VOICE-SPEC) ─── */
 .input-widget{
   position:fixed;bottom:0;left:0;right:0;z-index:30;
-  padding:2px 12px 16px;
+  padding:6px 12px 16px;
   background:linear-gradient(transparent,var(--surface) 30%);
 }
-.input-field-wrap{
-  background:var(--surface-ghost);border-radius:var(--shape-4xl);
-  padding:6px;display:flex;flex-direction:column;
+.input-field{
+  background:#eeeeef;border-radius:24px;
+  padding:8px;display:flex;flex-direction:column;gap:8px;
 }
-.input-text-area{padding:10px 8px;display:flex;align-items:center}
-.input-text-area input{
-  font-family:var(--font);font-size:14px;font-weight:400;
-  color:var(--text-high);background:transparent;
-  border:none;outline:none;width:100%;line-height:1.3;
+.input-top{display:flex;align-items:center;gap:4px}
+.input-text{
+  flex:1;padding:4px 8px;font-family:var(--font);font-size:16px;font-weight:400;
+  color:var(--text-low);opacity:.65;border:none;outline:none;background:none;
+  line-height:1.3;
 }
-.input-text-area input::placeholder{color:var(--text-low)}
-.input-actions{display:flex;justify-content:space-between;align-items:center;height:43px}
-.input-left-actions{display:flex;gap:2px}
+.input-actions{display:flex;justify-content:space-between;align-items:center}
+.input-left{display:flex;gap:2px;align-items:center}
 .input-icon-btn{
-  width:36px;height:36px;border-radius:var(--shape-pill);
-  display:flex;align-items:center;justify-content:center;
-  background:var(--surface-ghost-icon);border:none;cursor:pointer;
+  width:32px;height:32px;border-radius:50%;border:none;
+  background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;
 }
-.input-icon-btn:active{opacity:.7}
-.input-icon-btn svg{width:20px;height:20px;fill:var(--icon-medium)}
+.input-icon-btn svg{width:20px;height:20px;color:var(--text-low);opacity:.45}
+.input-icon-btn:active{background:rgba(0,0,0,.05)}
+.input-right{display:flex;gap:8px;align-items:center}
+.input-mic-btn{
+  width:32px;height:32px;border-radius:50%;border:none;
+  background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.input-mic-btn svg{width:20px;height:20px;color:var(--text-low);opacity:.45}
 .speak-btn{
-  background:var(--surface-bold);border:none;border-radius:var(--shape-pill);
-  padding:10px 20px;display:flex;align-items:center;gap:8px;cursor:pointer;
+  background:#6d17ce;border:none;border-radius:999px;
+  padding:8px 16px;display:flex;align-items:center;gap:6px;cursor:pointer;
 }
-.speak-btn:active{opacity:.85}
-.speak-btn svg{width:18px;height:18px;fill:#fff}
+.speak-btn svg{width:14px;height:14px;color:#fff}
 .speak-btn span{font-family:var(--font);font-weight:700;font-size:14px;color:#fff;line-height:1}
+.speak-btn:active{opacity:.85;transform:scale(.97)}
+
+/* ─── VOICE OVERLAY: 4-dots + mic/stop (per spec) ─── */
+@keyframes dotBreath{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(.92);opacity:.4}}
+@keyframes dotListen{0%,100%{transform:scale(1);opacity:1}25%{transform:scale(.7);opacity:.5}50%{transform:scale(1.08);opacity:1}75%{transform:scale(.8);opacity:.6}}
+@keyframes dotProcess{0%,100%{transform:scale(.8);opacity:.5}50%{transform:scale(1);opacity:1}}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(109,23,206,.4)}50%{box-shadow:0 0 0 16px rgba(109,23,206,0)}}
+
+.v-dots{width:148px;height:148px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.v-dots div{border-radius:50%;background:#6d17ce;transition:background .3s}
+.v-dots--idle div{animation:dotBreath 2.5s ease-in-out infinite;opacity:.5}
+.v-dots--idle div:nth-child(2){animation-delay:.3s}
+.v-dots--idle div:nth-child(3){animation-delay:.6s}
+.v-dots--idle div:nth-child(4){animation-delay:.9s}
+.v-dots--listening div{animation:dotListen 1s ease-in-out infinite;background:#6d17ce}
+.v-dots--listening div:nth-child(2){animation-delay:.15s}
+.v-dots--listening div:nth-child(3){animation-delay:.3s}
+.v-dots--listening div:nth-child(4){animation-delay:.45s}
+.v-dots--processing div,.v-dots--thinking div{animation:dotProcess 1.2s ease-in-out infinite;background:#9966dd}
+.v-dots--processing div:nth-child(2),.v-dots--thinking div:nth-child(2){animation-delay:.2s}
+.v-dots--processing div:nth-child(3),.v-dots--thinking div:nth-child(3){animation-delay:.4s}
+.v-dots--processing div:nth-child(4),.v-dots--thinking div:nth-child(4){animation-delay:.6s}
+.v-dots--speaking div{animation:dotBreath 2s ease-in-out infinite}
+
+.v-mic-btn{
+  width:64px;height:64px;border-radius:50%;border:none;
+  background:#6d17ce;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 4px 12px rgba(109,23,206,.35);
+}
+.v-mic-btn:active{transform:scale(.92)}
+.v-mic-btn.v-mic--pulse{animation:micPulse 1.5s ease-in-out infinite}
+
+.v-stop-btn{
+  width:64px;height:64px;border-radius:50%;border:none;
+  background:#fa2f40;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 4px 12px rgba(250,47,64,.3);
+}
+.v-stop-btn:active{transform:scale(.92)}
+
+/* Chat overlay (same as homepage) */
+.ai-avatar{width:32px;height:32px;display:grid;grid-template-columns:1fr 1fr;gap:3px;flex-shrink:0}
+.ai-avatar div{border-radius:50%;background:#6d17ce}
+.user-bubble{
+  max-width:270px;align-self:flex-end;
+  background:#eeeeef;border-radius:24px 24px 0 24px;
+  padding:12px 16px;font-family:var(--font);font-size:14px;font-weight:400;
+  color:var(--text-high);line-height:1.45;word-break:break-word;
+}
+.ai-row{display:flex;gap:10px;align-items:flex-start}
+.ai-bubble{flex:1;font-family:var(--font);font-size:14px;font-weight:400;color:var(--text-high);line-height:1.55;word-break:break-word}
+.ai-bubble p{margin-bottom:12px}
+.ai-bubble p:last-child{margin-bottom:0}
+.thinking-row{display:flex;gap:10px;align-items:center}
+.thinking-label{font-family:var(--font);font-size:14px;font-weight:400;color:var(--text-low)}
 
 @keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
 .anim-1{animation:fadeDown .4s ease both;animation-delay:0s}
@@ -166,30 +223,432 @@ a{text-decoration:none;color:inherit}
   <div style="height:32px"></div>
 </div>
 
-<!-- MULTI-MODAL CHAT INPUT -->
-<div class="input-widget">
-  <div class="input-field-wrap">
-    <div class="input-text-area">
-      <input type="text" placeholder="Hey Deepa, what's on your mind?" readonly>
+<!-- BOTTOM INPUT BAR (per BOTTOM-BAR-AND-VOICE-SPEC) -->
+<div class="input-widget" id="homeInput">
+  <div class="input-field">
+    <div class="input-top">
+      <input class="input-text" type="text" placeholder="Hey Deepa, what's on your mind?" readonly id="homeInputText">
     </div>
     <div class="input-actions">
-      <div class="input-left-actions">
+      <div class="input-left">
         <button class="input-icon-btn" aria-label="Add">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--icon-medium)"/></svg>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="input-icon-btn" aria-label="Mic">
-          <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3z"/><path d="M19 10v2a7 7 0 01-14 0v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--icon-medium)"/><path d="M12 19v3m-3 0h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--icon-medium)"/></svg>
+      <div class="input-right">
+        <button class="input-mic-btn" aria-label="Mic">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3z" fill="currentColor"/><path d="M19 10v2a7 7 0 01-14 0v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 19v3m-3 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
-        <button class="speak-btn">
-          <svg viewBox="0 0 24 24"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z" fill="currentColor"/></svg>
+        <button class="speak-btn" id="homeSpeakBtn">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z" fill="currentColor"/></svg>
           <span>Speak</span>
         </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- VOICE OVERLAY (full-screen, per spec + real API) -->
+<div id="voiceOverlay" style="display:none;position:fixed;inset:0;z-index:100;background:#fff;flex-direction:column;font-family:var(--font)">
+  <div style="display:flex;align-items:center;padding:10px 12px;height:56px;flex-shrink:0">
+    <button type="button" onclick="closeVoice()" style="width:40px;height:40px;border-radius:50%;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 19l-7-7 7-7" stroke="#170054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span style="font-size:16px;font-weight:500;color:var(--text-high);margin-left:4px">Voice</span>
+    <span style="flex:1"></span>
+  </div>
+  <div id="voiceBody" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;padding:0 24px">
+    <div id="voiceDots" class="v-dots v-dots--idle">
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <div id="voiceLabel" style="margin-top:28px;font-size:20px;font-weight:700;color:var(--text-high);text-align:center">Hey, Deepa</div>
+    <div id="voiceSub" style="margin-top:8px;font-size:15px;font-weight:400;color:var(--text-low);text-align:center">Tap the mic to start speaking</div>
+    <div id="voiceTranscript" style="display:none;margin-top:20px;font-size:15px;font-weight:500;color:var(--text-high);text-align:center;max-width:300px;line-height:1.5;background:#f5f5f5;padding:12px 16px;border-radius:16px"></div>
+    <div id="voiceResponse" style="display:none;margin-top:16px;text-align:left;width:100%;max-width:330px;max-height:240px;overflow-y:auto"></div>
+  </div>
+  <div style="padding:12px 24px 28px;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <button id="vMicBtn" type="button" onclick="voiceTapMic()" class="v-mic-btn">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3z" fill="#fff"/><path d="M19 10v2a7 7 0 01-14 0v-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M12 19v3m-3 0h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button id="vStopBtn" type="button" onclick="voiceTapStop()" class="v-stop-btn" style="display:none">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="6" y="6" width="12" height="12" rx="2" fill="#fff"/></svg>
+    </button>
+    <button id="vPlayBtn" type="button" onclick="voicePlayLastTts()" style="display:none;padding:10px 20px;border-radius:999px;border:none;background:var(--surface-bold);color:#fff;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer">Play response</button>
+    <div id="vAgainHint" style="display:none;font-size:13px;color:var(--text-low);text-align:center">Tap mic to speak again</div>
+  </div>
+</div>
+
+<!-- CHAT OVERLAY (text experience with real API) -->
+<div id="chatOverlay" style="display:none;position:fixed;inset:0;z-index:100;background:#fff;flex-direction:column">
+  <div style="display:flex;align-items:center;padding:10px 12px;height:56px;flex-shrink:0;border-bottom:1px solid #e3e3e4">
+    <button type="button" onclick="closeChat()" style="width:40px;height:40px;border-radius:50%;border:none;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 19l-7-7 7-7" stroke="#170054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span style="font-family:var(--font);font-size:16px;font-weight:500;color:var(--text-high);margin-left:4px">Career</span>
+    <span style="flex:1"></span>
+  </div>
+  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px"></div>
+  <div style="padding:6px 12px 16px;background:linear-gradient(transparent,#fff 30%)">
+    <div style="background:#eeeeef;border-radius:24px;padding:8px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:4px">
+        <input id="chatInput" type="text" placeholder="Ask anything..." style="flex:1;padding:4px 8px;font-family:var(--font);font-size:16px;font-weight:400;color:var(--text-high);border:none;outline:none;background:none;line-height:1.3" autocomplete="off">
+        <button id="chatSendBtn" type="button" onclick="sendChat()" style="display:none;width:32px;height:32px;border-radius:50%;border:none;background:#6d17ce;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 19V5m0 0l-6 6m6-6l6 6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:2px;align-items:center">
+          <button class="input-icon-btn" aria-label="Add"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="input-mic-btn" aria-label="Mic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3z" fill="currentColor"/><path d="M19 10v2a7 7 0 01-14 0v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 19v3m-3 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <button id="chatSpeakBtn" type="button" onclick="closeChat();openVoice();" style="background:#6d17ce;border:none;border-radius:999px;padding:8px 16px;display:flex;align-items:center;gap:6px;cursor:pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z" fill="currentColor"/></svg>
+            <span style="font-family:var(--font);font-weight:700;font-size:14px;color:#fff;line-height:1">Speak</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var USER_NAME = 'Deepa';
+  var SARVAM_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
+  var CHAT_PROXY = 'https://jbiq-proxy.sunit3-sharma.workers.dev';
+  var CAREER_SYSTEM = 'You are the JioBharatIQ Career assistant. Help with career guidance, interview prep, exams, English learning, and microlearning. Answer briefly and helpfully.';
+
+  var chatHistory = [];
+  var mediaRecorder = null;
+  var audioChunks = [];
+  var isRecording = false;
+  var currentAudio = null;
+  var lastTtsBase64 = null;
+  var vState = 'closed';
+
+  document.getElementById('homeInputText').addEventListener('click', openChat);
+  document.getElementById('homeInputText').removeAttribute('readonly');
+  document.getElementById('homeInputText').addEventListener('focus', function(e){ e.preventDefault(); this.blur(); openChat(); });
+  document.getElementById('homeSpeakBtn').addEventListener('click', openVoice);
+
+  function openChat(){
+    document.getElementById('chatOverlay').style.display = 'flex';
+    setTimeout(function(){ document.getElementById('chatInput').focus(); }, 100);
+  }
+  function closeChat(){
+    document.getElementById('chatOverlay').style.display = 'none';
+  }
+
+  document.getElementById('chatInput').addEventListener('input', function(){
+    var v = this.value.trim();
+    document.getElementById('chatSendBtn').style.display = v ? 'flex' : 'none';
+    document.getElementById('chatSpeakBtn').style.display = v ? 'none' : 'flex';
+  });
+  document.getElementById('chatInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && this.value.trim()) sendChat();
+  });
+
+  function addUserBubble(text){
+    var c = document.getElementById('chatMessages');
+    var d = document.createElement('div');
+    d.className = 'user-bubble';
+    d.textContent = text;
+    c.appendChild(d);
+    scrollChat();
+  }
+  function addThinking(){
+    var c = document.getElementById('chatMessages');
+    var d = document.createElement('div');
+    d.className = 'thinking-row';
+    d.innerHTML = '<div class="ai-avatar"><div></div><div></div><div></div><div></div></div><span class="thinking-label">Thinking...</span>';
+    c.appendChild(d);
+    scrollChat();
+    return d;
+  }
+  function formatMarkdown(text){
+    var html = (text||'').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
+    var lines = html.split('\n');
+    var out = '', inList = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (/^[-•*]\s/.test(line)) {
+        if (!inList) { out += '<ul>'; inList = true; }
+        out += '<li>' + line.replace(/^[-•*]\s/,'') + '</li>';
+      } else {
+        if (inList) { out += '</ul>'; inList = false; }
+        if (line) out += '<p>' + line + '</p>';
+      }
+    }
+    if (inList) out += '</ul>';
+    return out || ('<p>' + text + '</p>');
+  }
+  function addAIBubble(text){
+    var c = document.getElementById('chatMessages');
+    var row = document.createElement('div');
+    row.className = 'ai-row';
+    row.innerHTML = '<div class="ai-avatar"><div></div><div></div><div></div><div></div></div><div class="ai-bubble">' + formatMarkdown(text) + '</div>';
+    c.appendChild(row);
+    scrollChat();
+  }
+  function scrollChat(){
+    var c = document.getElementById('chatMessages');
+    setTimeout(function(){ c.scrollTop = c.scrollHeight; }, 50);
+  }
+
+  function callAnthropic(messages){
+    var body = { messages: messages };
+    return fetch(CHAT_PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function(resp){ return resp.json().then(function(data){ if (!resp.ok) throw new Error(data.error && data.error.message || data.message || 'Chat error ' + resp.status); return data; }); })
+      .then(function(data){
+        if (!data.content || !Array.isArray(data.content) || !data.content[0]) throw new Error('Invalid response');
+        return data.content[0].text || '';
+      });
+  }
+
+  async function sendChat(){
+    var inp = document.getElementById('chatInput');
+    var msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = '';
+    document.getElementById('chatSendBtn').style.display = 'none';
+    document.getElementById('chatSpeakBtn').style.display = 'flex';
+
+    addUserBubble(msg);
+    var thinkEl = addThinking();
+    if (chatHistory.length === 0) chatHistory.push({ role: 'user', content: CAREER_SYSTEM });
+    chatHistory.push({ role: 'user', content: msg });
+
+    try {
+      var resp = await callAnthropic(chatHistory);
+      thinkEl.remove();
+      addAIBubble(resp);
+      chatHistory.push({ role: 'assistant', content: resp });
+    } catch (err) {
+      thinkEl.remove();
+      addAIBubble('Error: ' + (err.message || 'Something went wrong. Please try again.'));
+      chatHistory.pop();
+    }
+  }
+
+  function openVoice(){
+    document.getElementById('voiceOverlay').style.display = 'flex';
+    setVoiceState('idle');
+  }
+  function closeVoice(){
+    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+    isRecording = false;
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    document.getElementById('voiceOverlay').style.display = 'none';
+    vState = 'closed';
+  }
+
+  function setVoiceState(state){
+    vState = state;
+    var dots = document.getElementById('voiceDots');
+    var label = document.getElementById('voiceLabel');
+    var sub = document.getElementById('voiceSub');
+    var transcript = document.getElementById('voiceTranscript');
+    var response = document.getElementById('voiceResponse');
+    var micBtn = document.getElementById('vMicBtn');
+    var stopBtn = document.getElementById('vStopBtn');
+    var playBtn = document.getElementById('vPlayBtn');
+    var hint = document.getElementById('vAgainHint');
+
+    dots.className = 'v-dots v-dots--' + state;
+
+    if (state === 'idle') {
+      label.textContent = 'Hey, ' + USER_NAME;
+      sub.textContent = 'Tap the mic to start speaking';
+      sub.style.display = '';
+      transcript.style.display = 'none';
+      transcript.textContent = '';
+      response.style.display = 'none';
+      response.innerHTML = '';
+      micBtn.style.display = 'flex';
+      micBtn.classList.remove('v-mic--pulse');
+      stopBtn.style.display = 'none';
+      if (playBtn) playBtn.style.display = 'none';
+      hint.style.display = 'none';
+    } else if (state === 'listening') {
+      label.textContent = 'Listening...';
+      sub.textContent = 'Tap the red button when done';
+      sub.style.display = '';
+      transcript.style.display = 'none';
+      response.style.display = 'none';
+      micBtn.style.display = 'none';
+      stopBtn.style.display = 'flex';
+      if (playBtn) playBtn.style.display = 'none';
+      hint.style.display = 'none';
+    } else if (state === 'processing' || state === 'thinking') {
+      label.textContent = state === 'processing' ? 'Processing...' : 'Thinking...';
+      sub.style.display = 'none';
+      micBtn.style.display = 'none';
+      stopBtn.style.display = 'none';
+      if (playBtn) playBtn.style.display = 'none';
+      hint.style.display = 'none';
+    } else if (state === 'speaking') {
+      label.textContent = '';
+      sub.style.display = 'none';
+      micBtn.style.display = 'flex';
+      micBtn.classList.add('v-mic--pulse');
+      stopBtn.style.display = 'none';
+      if (playBtn) playBtn.style.display = lastTtsBase64 ? 'block' : 'none';
+      hint.style.display = 'block';
+    }
+  }
+
+  function voiceTapMic(){
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    startVoiceRecording();
+  }
+  function voiceTapStop(){
+    if (isRecording && mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+    isRecording = false;
+  }
+
+  function startVoiceRecording(){
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      mediaRecorder.ondataavailable = function(e){ if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = function(){
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        if (audioChunks.length === 0) { setVoiceState('idle'); return; }
+        processVoice(new Blob(audioChunks, { type: 'audio/webm' }));
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      setVoiceState('listening');
+    }).catch(function(err){
+      document.getElementById('voiceLabel').textContent = 'Mic access denied';
+      document.getElementById('voiceSub').textContent = 'Please allow microphone and try again';
+      document.getElementById('voiceSub').style.display = '';
+      document.getElementById('vMicBtn').style.display = 'flex';
+    });
+  }
+
+  function convertToWav(webmBlob){
+    return new Promise(function(resolve){
+      var audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      var reader = new FileReader();
+      reader.onload = function(){
+        audioCtx.decodeAudioData(reader.result).then(function(audioBuffer){
+          var sampleRate = 16000;
+          var offlineCtx = new OfflineAudioContext(1, audioBuffer.duration * sampleRate, sampleRate);
+          var src = offlineCtx.createBufferSource();
+          src.buffer = audioBuffer;
+          src.connect(offlineCtx.destination);
+          src.start();
+          offlineCtx.startRendering().then(function(rendered){
+            var pcm = rendered.getChannelData(0);
+            var wavBuffer = encodeWav(pcm, sampleRate);
+            resolve(new Blob([wavBuffer], { type: 'audio/wav' }));
+          });
+        }).catch(function(){ resolve(webmBlob); });
+      };
+      reader.readAsArrayBuffer(webmBlob);
+    });
+  }
+  function encodeWav(samples, sampleRate){
+    var buffer = new ArrayBuffer(44 + samples.length * 2);
+    var view = new DataView(buffer);
+    function w(offset, str){ for (var i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); }
+    w(0, 'RIFF');
+    view.setUint32(4, 36 + samples.length * 2, true);
+    w(8, 'WAVE'); w(12, 'fmt ');
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true); w(36, 'data');
+    view.setUint32(40, samples.length * 2, true);
+    for (var i = 0; i < samples.length; i++) {
+      var s = Math.max(-1, Math.min(1, samples[i]));
+      view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    return buffer;
+  }
+
+  async function processVoice(audioBlob){
+    setVoiceState('processing');
+    try {
+      var wavBlob = await convertToWav(audioBlob);
+      var fd = new FormData();
+      fd.append('file', wavBlob, 'audio.wav');
+      fd.append('model', 'saaras:v3');
+      fd.append('language_code', 'unknown');
+      fd.append('mode', 'transcribe');
+
+      var sttResp = await fetch('https://api.sarvam.ai/speech-to-text', { method: 'POST', headers: { 'api-subscription-key': SARVAM_KEY }, body: fd });
+      if (!sttResp.ok) throw new Error('Speech recognition failed');
+      var sttData = await sttResp.json();
+      var transcript = (sttData.transcript || '').trim();
+      var detectedLang = sttData.language_code || 'en';
+
+      if (!transcript) {
+        document.getElementById('voiceLabel').textContent = "Didn't catch that";
+        document.getElementById('voiceSub').textContent = 'Tap mic to try again';
+        document.getElementById('voiceSub').style.display = '';
+        document.getElementById('vMicBtn').style.display = 'flex';
+        document.getElementById('vStopBtn').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('voiceTranscript').textContent = '"' + transcript + '"';
+      document.getElementById('voiceTranscript').style.display = 'block';
+      setVoiceState('thinking');
+
+      if (chatHistory.length === 0) chatHistory.push({ role: 'user', content: CAREER_SYSTEM });
+      chatHistory.push({ role: 'user', content: transcript });
+      var aiText = await callAnthropic(chatHistory);
+      chatHistory.push({ role: 'assistant', content: aiText });
+
+      setVoiceState('speaking');
+      var respEl = document.getElementById('voiceResponse');
+      respEl.style.display = 'block';
+      respEl.innerHTML = '<div style="font-family:var(--font);font-size:15px;color:var(--text-high);line-height:1.55">' + formatMarkdown(aiText) + '</div>';
+
+      speakWithSarvam(aiText, detectedLang);
+    } catch (err) {
+      document.getElementById('voiceLabel').textContent = 'Something went wrong';
+      document.getElementById('voiceSub').textContent = (err.message || 'Tap mic to try again');
+      document.getElementById('voiceSub').style.display = '';
+      document.getElementById('vMicBtn').style.display = 'flex';
+      document.getElementById('vStopBtn').style.display = 'none';
+      document.getElementById('vAgainHint').style.display = 'none';
+      if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') chatHistory.pop();
+    }
+  }
+
+  function speakWithSarvam(text, lang){
+    var ttsLang = (lang && lang.indexOf('hi') === 0) ? 'hi-IN' : 'en-IN';
+    var cleaned = (text || '').replace(/[#*_`>\[\](){}|~]/g,'').replace(/\n{2,}/g,'. ').replace(/\n/g,' ').replace(/\s{2,}/g,' ').trim().substring(0, 500);
+    if (!cleaned) return;
+    fetch('https://api.sarvam.ai/text-to-speech', {
+      method: 'POST',
+      headers: { 'api-subscription-key': SARVAM_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inputs: [cleaned], target_language_code: ttsLang, speaker: 'anushka', model: 'bulbul:v2' })
+    }).then(function(ttsResp){ return ttsResp.json(); }).then(function(ttsData){
+      if (ttsData.audios && ttsData.audios[0]) {
+        lastTtsBase64 = ttsData.audios[0];
+        document.getElementById('vPlayBtn').style.display = 'block';
+        var audio = new Audio('data:audio/wav;base64,' + lastTtsBase64);
+        currentAudio = audio;
+        audio.play().catch(function(){});
+      }
+    }).catch(function(){});
+  }
+
+  function voicePlayLastTts(){
+    if (lastTtsBase64) {
+      var audio = new Audio('data:audio/wav;base64,' + lastTtsBase64);
+      currentAudio = audio;
+      audio.play().catch(function(){});
+    }
+  }
+})();
+</script>
 
 </body>
 </html>
