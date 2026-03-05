@@ -643,7 +643,11 @@ function scrollToBottom() {
 }
 
 // === State transitions ===
+let _lastNavAt = 0;
 async function goToState(state) {
+  const now = Date.now();
+  if (now - _lastNavAt < 300) return;
+  _lastNavAt = now;
   currentState = state;
 
   switch(state) {
@@ -670,7 +674,7 @@ async function goToState(state) {
       await addRaw(`
         <div class="entry-card" onclick="goToState('j1_situations')">
           <div class="entry-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 12h-4a1 1 0 010-2h1v-3h-1a1 1 0 010-2h2a1 1 0 011 1v4h1a1 1 0 010 2z"/></svg></div>
-          <div><h4>Learn for a situation</h4><p>પરિસ્થિતિ માટે શીખો</p></div>
+          <div><h4>Practice for a situation</h4><p>પરિસ્થિતિ માટે શીખો</p></div>
         </div>
         <div class="entry-card" onclick="goToState('j2_topic')">
           <div class="entry-icon" style="background:var(--secondary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21.37 9.61a1.964 1.964 0 00-.58-.856 1.896 1.896 0 00-.94-.428l-4.235-.646-1.899-4.087a1.963 1.963 0 00-.702-.798 1.917 1.917 0 00-1.016-.295c-.361 0-.712.105-1.016.295a1.85 1.85 0 00-.703.798L8.38 7.68l-4.273.646c-.342.057-.674.2-.94.428a1.964 1.964 0 00-.58.855 1.91 1.91 0 00.447 1.901l3.124 3.213-.74 4.553c-.058.351-.01.712.123 1.036.133.323.36.608.655.817.313.238.703.37 1.102.38.332 0 .655-.076.95-.237l3.788-2.091 3.788 2.09c.285.162.618.248.95.238a1.9 1.9 0 001.101-.351c.285-.21.513-.485.655-.818.133-.323.181-.684.124-1.036l-.74-4.552 3.123-3.213c.228-.257.37-.58.437-.922a1.91 1.91 0 00-.104-1.008z"/></svg></div>
@@ -1009,7 +1013,7 @@ async function goToState(state) {
       await addRaw(`
         <div class="entry-card" onclick="goToState('j1_situations')">
           <div class="entry-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm2 12h-4a1 1 0 010-2h1v-3h-1a1 1 0 010-2h2a1 1 0 011 1v4h1a1 1 0 010 2z"/></svg></div>
-          <div><h4>Learn for a situation</h4><p>પરિસ્થિતિ માટે શીખો</p></div>
+          <div><h4>Practice for a situation</h4><p>પરિસ્થિતિ માટે શીખો</p></div>
         </div>
         <div class="entry-card" onclick="goToState('j2_topic')">
           <div class="entry-icon" style="background:var(--secondary)"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21.37 9.61a1.964 1.964 0 00-.58-.856 1.896 1.896 0 00-.94-.428l-4.235-.646-1.899-4.087a1.963 1.963 0 00-.702-.798 1.917 1.917 0 00-1.016-.295c-.361 0-.712.105-1.016.295a1.85 1.85 0 00-.703.798L8.38 7.68l-4.273.646c-.342.057-.674.2-.94.428a1.964 1.964 0 00-.58.855 1.91 1.91 0 00.447 1.901l3.124 3.213-.74 4.553c-.058.351-.01.712.123 1.036.133.323.36.608.655.817.313.238.703.37 1.102.38.332 0 .655-.076.95-.237l3.788-2.091 3.788 2.09c.285.162.618.248.95.238a1.9 1.9 0 001.101-.351c.285-.21.513-.485.655-.818.133-.323.181-.684.124-1.036l-.74-4.552 3.123-3.213c.228-.257.37-.58.437-.922a1.91 1.91 0 00-.104-1.008z"/></svg></div>
