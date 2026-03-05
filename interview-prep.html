@@ -349,51 +349,72 @@ const ICONS = {
   star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
 };
 
-// === Text-to-Speech Engine (Sarvam AI Bulbul v3) ===
+// === Text-to-Speech Engine (Sarvam AI — AudioContext unlock pattern) ===
 const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 let ttsAudio = null;
-let ttsCache = {}; // cache base64 audio to avoid repeat calls
+let ttsCache = {};
+let playbackCtx = null;
+let lastTtsBase64 = null;
+
+function unlockAudio() {
+  if (playbackCtx) return;
+  try {
+    playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+    playbackCtx.resume();
+  } catch(e) { console.warn('AudioContext:', e); }
+}
+function base64ToArrayBuffer(b64) {
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+function playTtsViaContext(base64) {
+  if (!playbackCtx || !base64) return;
+  try {
+    playbackCtx.resume();
+    playbackCtx.decodeAudioData(base64ToArrayBuffer(base64)).then(buf => {
+      const src = playbackCtx.createBufferSource();
+      src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
+    }).catch(e => console.error('decodeAudioData:', e));
+  } catch(e) { console.error('playTtsViaContext:', e); }
+}
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
 
 async function speakHindi(text) {
   stopTTS();
-
-  // Check cache first
   if (ttsCache[text]) {
-    playBase64Audio(ttsCache[text]);
+    lastTtsBase64 = ttsCache[text];
+    if (playbackCtx) { playTtsViaContext(lastTtsBase64); }
+    else { playBase64Audio(lastTtsBase64); }
     return;
   }
-
   try {
     const res = await fetch(SARVAM_TTS_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-subscription-key': SARVAM_API_KEY
-      },
+      headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
       body: JSON.stringify({
         inputs: [text],
         target_language_code: 'hi-IN',
-        speaker: 'shubh',
-        model: 'bulbul:v3',
+        speaker: 'anushka',
+        model: 'bulbul:v2',
         enable_preprocessing: true
       })
     });
-
     if (!res.ok) throw new Error('Sarvam API error: ' + res.status);
-
     const data = await res.json();
     const b64 = data.audios && data.audios[0];
     if (b64) {
       ttsCache[text] = b64;
-      playBase64Audio(b64);
+      lastTtsBase64 = b64;
+      if (playbackCtx) { playTtsViaContext(b64); }
+      else { playBase64Audio(b64); }
     }
   } catch (err) {
     console.warn('Sarvam TTS failed, falling back to browser TTS:', err);
-    // Fallback to browser speechSynthesis
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'hi-IN';
-    utter.rate = 0.85;
+    utter.lang = 'hi-IN'; utter.rate = 0.85;
     speechSynthesis.speak(utter);
   }
 }
@@ -801,8 +822,8 @@ async function preloadAllTTS() {
         body: JSON.stringify({
           inputs: [text],
           target_language_code: 'hi-IN',
-          speaker: 'shubh',
-          model: 'bulbul:v3',
+          speaker: 'anushka',
+          model: 'bulbul:v2',
           enable_preprocessing: true
         })
       });
