@@ -1043,6 +1043,8 @@ function selectCompanion(name) {
 
 function simulateRecording() {
   const btn = event.currentTarget;
+  if (btn.disabled) return;
+  btn.disabled = true;
   btn.classList.add('recording');
   btn.parentElement.querySelector('.mic-label').textContent = 'Listening...';
   setTimeout(() => {
@@ -1054,6 +1056,8 @@ function simulateRecording() {
 
 function simulateVocabRecording() {
   const btn = event.currentTarget;
+  if (btn.disabled) return;
+  btn.disabled = true;
   btn.classList.add('recording');
   setTimeout(() => {
     btn.classList.remove('recording');
