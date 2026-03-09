@@ -280,6 +280,24 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
 
 .hidden { display: none !important; }
 .fade-in { animation: msgIn 0.4s ease-out; }
+
+/* Floating TTS pause button */
+.tts-pause-bar {
+  display: none;
+  position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+  z-index: 100;
+}
+.tts-pause-bar.visible { display: flex; }
+.tts-pause-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: var(--radius-pill);
+  background: var(--grey-100); color: white;
+  font-family: var(--font); font-size: 12px; font-weight: 700;
+  border: none; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  transition: all 0.2s;
+}
+.tts-pause-btn:active { transform: scale(0.95); }
+.tts-pause-btn svg { flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -308,6 +326,12 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
   <div class="chat-body">
     <div class="chat-area" id="chatArea">
       <!-- Messages rendered by JS -->
+    </div>
+    <div class="tts-pause-bar" id="ttsPauseBar">
+      <button class="tts-pause-btn" onclick="toggleTTS()">
+        <svg id="ttsPauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+        <span id="ttsPauseLbl">Pause</span>
+      </button>
     </div>
     <div class="input-widget">
       <div class="input-field-wrap">
@@ -410,11 +434,45 @@ function playBlobUrl(url) {
   ttsAudio = new Audio(url);
   if (playbackCtx) playbackCtx.resume();
   ttsAudio.play().catch(err => console.warn('Audio play failed:', err));
+  showTTSPause();
+  ttsAudio.onended = () => hideTTSPause();
+  ttsAudio.onerror = () => hideTTSPause();
+}
+
+function toggleTTS() {
+  if (!ttsAudio) return;
+  const bar = document.getElementById('ttsPauseBar');
+  const icon = document.getElementById('ttsPauseIcon');
+  const lbl = document.getElementById('ttsPauseLbl');
+  if (ttsAudio.paused) {
+    ttsAudio.play();
+    icon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>';
+    lbl.textContent = 'Pause';
+  } else {
+    ttsAudio.pause();
+    icon.innerHTML = '<path d="M19.15 10.36l-10-7A2 2 0 008 3a1.88 1.88 0 00-.92.23A2 2 0 006 5v14a2 2 0 001.08 1.77c.282.154.599.233.92.23a2 2 0 001.15-.36l10-7a2 2 0 000-3.28z"/>';
+    lbl.textContent = 'Play';
+  }
+}
+
+function showTTSPause() {
+  const bar = document.getElementById('ttsPauseBar');
+  const icon = document.getElementById('ttsPauseIcon');
+  const lbl = document.getElementById('ttsPauseLbl');
+  if (bar) bar.classList.add('visible');
+  if (icon) icon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>';
+  if (lbl) lbl.textContent = 'Pause';
+}
+
+function hideTTSPause() {
+  const bar = document.getElementById('ttsPauseBar');
+  if (bar) bar.classList.remove('visible');
 }
 
 function stopTTS() {
   if (ttsAudio) { ttsAudio.pause(); ttsAudio.currentTime = 0; ttsAudio = null; }
   speechSynthesis.cancel();
+  hideTTSPause();
 }
 
 // === State Machine ===
