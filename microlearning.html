@@ -1167,8 +1167,7 @@ goToState('welcome');
 <script>
 // ========== VOICE PIPELINE: STT → Anthropic → TTS ==========
 const CHAT_PROXY_V = 'https://jbiq-proxy.sunit3-sharma.workers.dev';
-const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks'; // kept for STT
-const SARVAM_STT_URL_V = 'https://api.sarvam.ai/speech-to-text';
+const ELEVENLABS_STT_URL = 'https://api.elevenlabs.io/v1/speech-to-text';
 
 let voiceChatHistory = [];
 let mediaRecorderV = null;
@@ -1288,18 +1287,16 @@ async function processVoiceV(audioBlob) {
     const wavBlob = await convertToWavV(audioBlob);
     const fd = new FormData();
     fd.append('file', wavBlob, 'audio.wav');
-    fd.append('model', 'saaras:v3');
-    fd.append('language_code', 'unknown');
-    fd.append('mode', 'transcribe');
+    fd.append('model_id', 'scribe_v1');
 
-    const sttResp = await fetch(SARVAM_STT_URL_V, {
+    const sttResp = await fetch(ELEVENLABS_STT_URL, {
       method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY },
+      headers: { 'xi-api-key': ELEVENLABS_API_KEY },
       body: fd
     });
     if (!sttResp.ok) throw new Error('Speech recognition failed: ' + sttResp.status);
     const sttData = await sttResp.json();
-    const transcript = (sttData.transcript || '').trim();
+    const transcript = (sttData.text || '').trim();
     const detectedLang = sttData.language_code || 'en';
 
     if (!transcript) {
