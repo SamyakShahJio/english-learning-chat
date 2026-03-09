@@ -500,56 +500,34 @@ const ICONS = {
   arrowRight: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
 };
 
-// === Sarvam AI TTS with pre-caching (robust AudioContext + fallback) ===
-const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
-const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
+// === ElevenLabs TTS with pre-caching ===
+const ELEVENLABS_API_KEY = 'sk_86a2daf2318ba84afa5190ff9a2c09fcc9e7f9dafea1fe79';
+const ELEVENLABS_VOICE_ID = 'nPczCjzI2devNBz1zQrb'; // Priya (Indian)
+const ELEVENLABS_TTS_URL = `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`;
 let ttsAudio = null;
-const ttsCache = {};
-let playbackCtx = null;
-let lastTtsBase64 = null;
+const ttsCache = {}; // text -> blob URL
+let lastTtsBlobUrl = null;
 
-function unlockAudio() {
-  try {
-    if (!playbackCtx) {
-      playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (playbackCtx.state === 'suspended') playbackCtx.resume();
-  } catch(e) { console.warn('AudioContext:', e); }
+async function fetchElevenLabsTTS(text) {
+  const res = await fetch(ELEVENLABS_TTS_URL, {
+    method: 'POST',
+    headers: { 'xi-api-key': ELEVENLABS_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: text,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+    })
+  });
+  if (!res.ok) throw new Error('TTS error ' + res.status);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
 }
 
-function base64ToArrayBuffer(b64) {
-  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes.buffer;
-}
-
-function playBase64Audio(base64) {
-  ttsAudio = new Audio('data:audio/wav;base64,' + base64);
+function playBlobUrl(url) {
+  stopTTS();
+  ttsAudio = new Audio(url);
   ttsAudio.play().catch(() => {});
 }
-
-function playTtsViaContext(base64) {
-  unlockAudio();
-  if (!base64) return;
-  if (!playbackCtx) { playBase64Audio(base64); return; }
-  try {
-    playbackCtx.resume();
-    const ab = base64ToArrayBuffer(base64);
-    playbackCtx.decodeAudioData(ab.slice(0)).then(buf => {
-      const src = playbackCtx.createBufferSource();
-      src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
-    }).catch(e => {
-      console.warn('decodeAudioData failed, using Audio fallback:', e);
-      playBase64Audio(base64);
-    });
-  } catch(e) {
-    console.warn('AudioContext play failed, using Audio fallback:', e);
-    playBase64Audio(base64);
-  }
-}
-
-document.addEventListener('click', unlockAudio);
-document.addEventListener('touchstart', unlockAudio);
 
 const TTS_TEXTS = {
   ctr: 'Click-Through Rate matlab kitne log aapka video cover dekhke actually click karte hain. Agar 100 log dekhein aur 5 click karein toh 5 percent CTR hai.',
@@ -558,58 +536,25 @@ const TTS_TEXTS = {
   anchor: 'Jab log scroll karte hain, unka dimaag 2 second mein decide karta hai ki click karna hai ya nahi. Ek achha thumbnail woh decision jeetata hai.'
 };
 
-async function preCacheTTS() {
-  for (const key of Object.keys(TTS_TEXTS)) {
-    try {
-      const res = await fetch(SARVAM_TTS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
-        body: JSON.stringify({
-          inputs: [TTS_TEXTS[key]],
-          target_language_code: 'hi-IN',
-          speaker: 'anushka',
-          model: 'bulbul:v2',
-          enable_preprocessing: true,
-          pace: 1.2
-        })
-      });
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data.audios && data.audios[0]) ttsCache[TTS_TEXTS[key]] = data.audios[0];
-    } catch (e) { /* ignore pre-cache errors */ }
-  }
-}
-preCacheTTS();
+// Pre-cache all TTS in parallel
+Promise.all(Object.keys(TTS_TEXTS).map(key =>
+  fetchElevenLabsTTS(TTS_TEXTS[key])
+    .then(url => { ttsCache[TTS_TEXTS[key]] = url; })
+    .catch(() => {})
+));
 
 async function speakHindi(text) {
   stopTTS();
-  unlockAudio();
   if (ttsCache[text]) {
-    lastTtsBase64 = ttsCache[text];
-    playTtsViaContext(lastTtsBase64);
+    lastTtsBlobUrl = ttsCache[text];
+    playBlobUrl(lastTtsBlobUrl);
     return;
   }
   try {
-    const res = await fetch(SARVAM_TTS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'api-subscription-key': SARVAM_API_KEY },
-      body: JSON.stringify({
-        inputs: [text],
-        target_language_code: 'hi-IN',
-        speaker: 'anushka',
-        model: 'bulbul:v2',
-        enable_preprocessing: true,
-        pace: 1.2
-      })
-    });
-    if (!res.ok) throw new Error('TTS error');
-    const data = await res.json();
-    const b64 = data.audios && data.audios[0];
-    if (b64) {
-      ttsCache[text] = b64;
-      lastTtsBase64 = b64;
-      playTtsViaContext(b64);
-    }
+    const url = await fetchElevenLabsTTS(text);
+    ttsCache[text] = url;
+    lastTtsBlobUrl = url;
+    playBlobUrl(url);
   } catch (err) {
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'hi-IN'; utter.rate = 0.85;
@@ -1222,6 +1167,7 @@ goToState('welcome');
 <script>
 // ========== VOICE PIPELINE: STT → Anthropic → TTS ==========
 const CHAT_PROXY_V = 'https://jbiq-proxy.sunit3-sharma.workers.dev';
+const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks'; // kept for STT
 const SARVAM_STT_URL_V = 'https://api.sarvam.ai/speech-to-text';
 
 let voiceChatHistory = [];
@@ -1276,14 +1222,13 @@ function setVoiceState(state) {
       label.textContent = ''; sub.style.display = 'none';
       micBtn.style.display = 'flex'; micBtn.classList.add('vo-mic--pulse');
       stopBtn.style.display = 'none';
-      if (playBtn) playBtn.style.display = lastTtsBase64 ? 'block' : 'none';
+      if (playBtn) playBtn.style.display = lastTtsBlobUrl ? 'block' : 'none';
       hint.style.display = 'block';
       break;
   }
 }
 
 function openVoice() {
-  unlockAudio();
   document.getElementById('voiceOverlay').classList.add('open');
   setVoiceState('idle');
 }
@@ -1296,12 +1241,10 @@ function closeVoice() {
 }
 
 function voicePlayLastTts() {
-  unlockAudio();
-  if (lastTtsBase64) playTtsViaContext(lastTtsBase64);
+  if (lastTtsBlobUrl) playBlobUrl(lastTtsBlobUrl);
 }
 
 function voiceTapMic() {
-  unlockAudio();
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   startVoiceRecordingV();
 }
@@ -1383,7 +1326,7 @@ async function processVoiceV(audioBlob) {
     respEl.style.display = 'block';
     respEl.innerHTML = '<p>' + aiText.replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
 
-    speakWithSarvamV(aiText, detectedLang);
+    speakWithElevenLabsV(aiText, detectedLang);
 
   } catch (err) {
     console.error('Voice error:', err);
@@ -1407,24 +1350,16 @@ async function callAnthropicV(messages) {
   return data.content[0].text;
 }
 
-async function speakWithSarvamV(text, lang) {
-  const ttsLang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
+async function speakWithElevenLabsV(text, lang) {
   const cleaned = text.replace(/[#*_`>\[\](){}|~]/g, '').replace(/\bhttps?:\/\/\S+/g, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
   const shortText = cleaned.substring(0, 500);
   if (!shortText) return;
   try {
-    const ttsResp = await fetch(SARVAM_TTS_URL, {
-      method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inputs: [shortText], target_language_code: ttsLang, speaker: 'anushka', model: 'bulbul:v2' })
-    });
-    const ttsData = await ttsResp.json();
-    if (ttsData.audios && ttsData.audios[0]) {
-      lastTtsBase64 = ttsData.audios[0];
-      const vPlay = document.getElementById('vPlayBtn');
-      if (vPlay) vPlay.style.display = 'block';
-      playTtsViaContext(lastTtsBase64);
-    }
+    const url = await fetchElevenLabsTTS(shortText);
+    lastTtsBlobUrl = url;
+    const vPlay = document.getElementById('vPlayBtn');
+    if (vPlay) vPlay.style.display = 'block';
+    playBlobUrl(url);
   } catch (e) {
     console.error('TTS fetch error:', e);
     browserSpeak(text);
