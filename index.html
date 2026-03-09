@@ -1353,8 +1353,7 @@ goToState('welcome');
 <script>
 // ========== VOICE PIPELINE: STT → Anthropic → TTS ==========
 const CHAT_PROXY = 'https://jbiq-proxy.sunit3-sharma.workers.dev';
-const SARVAM_STT_URL = 'https://api.sarvam.ai/speech-to-text';
-const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks'; // STT only
+const EL_STT_URL = 'https://api.elevenlabs.io/v1/speech-to-text';
 
 let voiceChatHistory = [];
 let mediaRecorder = null;
@@ -1472,18 +1471,16 @@ async function processVoice(audioBlob) {
     const wavBlob = await convertToWav(audioBlob);
     const fd = new FormData();
     fd.append('file', wavBlob, 'audio.wav');
-    fd.append('model', 'saaras:v3');
-    fd.append('language_code', 'unknown');
-    fd.append('mode', 'transcribe');
+    fd.append('model_id', 'scribe_v1');
 
-    const sttResp = await fetch(SARVAM_STT_URL, {
+    const sttResp = await fetch(EL_STT_URL, {
       method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY },
+      headers: { 'xi-api-key': EL_API_KEY },
       body: fd
     });
     if (!sttResp.ok) throw new Error('Speech recognition failed: ' + sttResp.status);
     const sttData = await sttResp.json();
-    const transcript = (sttData.transcript || '').trim();
+    const transcript = (sttData.text || '').trim();
     const detectedLang = sttData.language_code || 'en';
 
     if (!transcript) {
@@ -1510,7 +1507,7 @@ async function processVoice(audioBlob) {
     respEl.style.display = 'block';
     respEl.innerHTML = '<p>' + aiText.replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
 
-    speakWithSarvam(aiText, detectedLang);
+    speakResponse(aiText, detectedLang);
 
   } catch (err) {
     console.error('Voice error:', err);
@@ -1534,7 +1531,7 @@ async function callAnthropic(messages) {
   return data.content[0].text;
 }
 
-async function speakWithSarvam(text, lang) {
+async function speakResponse(text, lang) {
   const cleaned = text.replace(/[#*_`>\[\](){}|~]/g, '').replace(/\bhttps?:\/\/\S+/g, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
   const shortText = cleaned.substring(0, 500);
   if (!shortText) return;
