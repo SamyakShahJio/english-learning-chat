@@ -346,7 +346,7 @@ body { font-family: 'JioType'; background: var(--white); display: flex; flex-dir
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2a1 1 0 00-1 1v18a1 1 0 002 0V3a1 1 0 00-1-1zM4 9a1 1 0 00-1 1v4a1 1 0 102 0v-4a1 1 0 00-1-1zm4-3a1 1 0 00-1 1v10a1 1 0 102 0V7a1 1 0 00-1-1zm12 3a1 1 0 00-1 1v4a1 1 0 002 0v-4a1 1 0 00-1-1zm-4-3a1 1 0 00-1 1v10a1 1 0 002 0V7a1 1 0 00-1-1z"/></svg>
     </div>
     <div class="chat-header-info">
-      <h3>Govt Exam Coach</h3>
+      <h3>Govt Exam Prep Coach</h3>
       <span>Online</span>
     </div>
   </div>
@@ -398,88 +398,41 @@ const ICONS = {
   sparkle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>',
 };
 
-// === Sarvam AI Text-to-Speech Engine (robust AudioContext + fallback) ===
-const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
-const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
-const SARVAM_SPEAKER = 'anushka';
+// === ElevenLabs Text-to-Speech Engine ===
+const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks'; // kept for STT
+const EL_API_KEY = 'sk_86a2daf2318ba84afa5190ff9a2c09fcc9e7f9dafea1fe79';
+const EL_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
+const EL_MODEL = 'eleven_flash_v2_5';
 const ttsCache = new Map();
 let currentAudio = null;
-let playbackCtx = null;
 let lastTtsBase64 = null;
 
-function unlockAudio() {
-  try {
-    if (!playbackCtx) {
-      playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (playbackCtx.state === 'suspended') playbackCtx.resume();
-  } catch(e) { console.warn('AudioContext:', e); }
-}
-
-function base64ToArrayBuffer(b64) {
-  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes.buffer;
-}
-
-function playAudioFallback(base64) {
-  const audio = new Audio('data:audio/wav;base64,' + base64);
+function playTtsUrl(url) {
   if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+  const audio = new Audio(url);
   currentAudio = audio;
   audio.play().catch(() => {});
 }
 
-function playTtsViaContext(base64) {
-  unlockAudio();
-  if (!base64) return;
-  if (!playbackCtx) { playAudioFallback(base64); return; }
-  try {
-    playbackCtx.resume();
-    const ab = base64ToArrayBuffer(base64);
-    playbackCtx.decodeAudioData(ab.slice(0)).then(buf => {
-      const src = playbackCtx.createBufferSource();
-      src.buffer = buf; src.connect(playbackCtx.destination); src.start(0);
-    }).catch(e => {
-      console.warn('decodeAudioData failed, using Audio fallback:', e);
-      playAudioFallback(base64);
-    });
-  } catch(e) {
-    console.warn('AudioContext play failed, using Audio fallback:', e);
-    playAudioFallback(base64);
-  }
-}
-
-document.addEventListener('click', unlockAudio);
-document.addEventListener('touchstart', unlockAudio);
-
 async function sarvamTTS(text, pace = 1.0) {
-  unlockAudio();
-  const cacheKey = text + '|' + pace;
+  const cacheKey = text;
   if (ttsCache.has(cacheKey)) {
-    lastTtsBase64 = ttsCache.get(cacheKey);
-    playTtsViaContext(lastTtsBase64);
+    playTtsUrl(ttsCache.get(cacheKey));
     return;
   }
   try {
-    const res = await fetch(SARVAM_TTS_URL, {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE_ID}`, {
       method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        inputs: [text],
-        target_language_code: 'en-IN',
-        speaker: SARVAM_SPEAKER,
-        model: 'bulbul:v2',
-        pace: pace
-      })
+      headers: { 'xi-api-key': EL_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, model_id: EL_MODEL })
     });
-    const data = await res.json();
-    if (data.audios && data.audios[0]) {
-      lastTtsBase64 = data.audios[0];
-      ttsCache.set(cacheKey, lastTtsBase64);
-      playTtsViaContext(lastTtsBase64);
-    }
+    if (!res.ok) throw new Error('ElevenLabs ' + res.status);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    ttsCache.set(cacheKey, url);
+    playTtsUrl(url);
   } catch (e) {
-    console.warn('Sarvam TTS failed:', e);
+    console.warn('ElevenLabs TTS failed:', e);
   }
 }
 
@@ -1201,7 +1154,7 @@ function playAudioConcept(btn) {
 
 // === Init ===
 function init() {
-  addAiMsg("Namaste Deepak! I'm your Bharat Career Prep AI. I can help you discover the right government exam, practice with mock quizzes, or review concepts with flashcards.");
+  addAiMsg("Namaste Deepak! I'm your Govt Exam Prep Coach. I can help you discover the right government exam, practice with mock quizzes, or review concepts with flashcards.");
   setTimeout(() => {
     addAiMsg("What would you like to do today?");
     showEntryChips();
@@ -1326,7 +1279,6 @@ function setVoiceState(state) {
 }
 
 function openVoice() {
-  unlockAudio();
   document.getElementById('voiceOverlay').classList.add('open');
   setVoiceState('idle');
 }
@@ -1339,12 +1291,10 @@ function closeVoice() {
 }
 
 function voicePlayLastTts() {
-  unlockAudio();
-  if (lastTtsBase64) playTtsViaContext(lastTtsBase64);
+  if (currentAudio) { currentAudio.currentTime = 0; currentAudio.play().catch(() => {}); }
 }
 
 function voiceTapMic() {
-  unlockAudio();
   if (currentAudio) { currentAudio.pause(); currentAudio = null; }
   startVoiceRecordingG();
 }
@@ -1451,23 +1401,29 @@ async function callAnthropicG(messages) {
 }
 
 async function speakWithSarvamG(text, lang) {
-  const ttsLang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
   const cleaned = text.replace(/[#*_`>\[\](){}|~]/g, '').replace(/\bhttps?:\/\/\S+/g, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
   const shortText = cleaned.substring(0, 500);
   if (!shortText) return;
   try {
-    const ttsResp = await fetch(SARVAM_TTS_URL, {
-      method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inputs: [shortText], target_language_code: ttsLang, speaker: 'anushka', model: 'bulbul:v2' })
-    });
-    const ttsData = await ttsResp.json();
-    if (ttsData.audios && ttsData.audios[0]) {
-      lastTtsBase64 = ttsData.audios[0];
+    const cacheKey = shortText;
+    if (ttsCache.has(cacheKey)) {
+      playTtsUrl(ttsCache.get(cacheKey));
       const vPlay = document.getElementById('vPlayBtn');
       if (vPlay) vPlay.style.display = 'block';
-      playTtsViaContext(lastTtsBase64);
+      return;
     }
+    const ttsResp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE_ID}`, {
+      method: 'POST',
+      headers: { 'xi-api-key': EL_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: shortText, model_id: EL_MODEL })
+    });
+    if (!ttsResp.ok) throw new Error('ElevenLabs ' + ttsResp.status);
+    const blob = await ttsResp.blob();
+    const url = URL.createObjectURL(blob);
+    ttsCache.set(cacheKey, url);
+    const vPlay = document.getElementById('vPlayBtn');
+    if (vPlay) vPlay.style.display = 'block';
+    playTtsUrl(url);
   } catch (e) {
     console.error('TTS fetch error:', e);
     browserSpeak(text);
