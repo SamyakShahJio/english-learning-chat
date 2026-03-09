@@ -477,93 +477,58 @@ const ICONS = {
   profile: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6a4 4 0 11-8 0 4 4 0 018 0zm4 10.5c0 3.038-3.582 5.5-8 5.5s-8-2.462-8-5.5S7.582 11 12 11s8 2.462 8 5.5z"/></svg>',
 };
 
-// === Sarvam AI Text-to-Speech Engine (robust AudioContext + fallback) ===
-const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks';
-const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
-const SARVAM_SPEAKER = 'anushka';
+// === ElevenLabs Text-to-Speech Engine ===
+const EL_API_KEY = 'sk_86a2daf2318ba84afa5190ff9a2c09fcc9e7f9dafea1fe79';
+const EL_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel — clear, professional female
+const EL_TTS_URL = `https://api.elevenlabs.io/v1/text-to-speech/${EL_VOICE_ID}`;
 const ttsCache = new Map();
 let currentAudio = null;
 let playbackCtx = null;
-let lastTtsBase64 = null;
+let lastTtsUrl = null;
 
 function unlockAudio() {
   try {
-    if (!playbackCtx) {
-      playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    if (!playbackCtx) playbackCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (playbackCtx.state === 'suspended') playbackCtx.resume();
   } catch(e) { console.warn('AudioContext:', e); }
 }
 
-function base64ToArrayBuffer(b64) {
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return bytes.buffer;
-}
-
-function playAudioFallback(base64, onended) {
-  const audio = new Audio('data:audio/wav;base64,' + base64);
+function playAudioUrl(url, onended) {
+  const audio = new Audio(url);
   if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
   currentAudio = audio;
   if (onended) audio.onended = onended;
   audio.play().catch(() => { if (onended) setTimeout(onended, 300); });
 }
 
-function playTtsViaContext(base64, onended) {
-  unlockAudio();
-  if (!base64) return;
-  if (!playbackCtx) { playAudioFallback(base64, onended); return; }
-  try {
-    playbackCtx.resume();
-    const ab = base64ToArrayBuffer(base64);
-    playbackCtx.decodeAudioData(ab.slice(0)).then(buf => {
-      const src = playbackCtx.createBufferSource();
-      src.buffer = buf;
-      src.connect(playbackCtx.destination);
-      if (onended) src.onended = onended;
-      src.start(0);
-    }).catch(e => {
-      console.warn('decodeAudioData failed, using Audio fallback:', e);
-      playAudioFallback(base64, onended);
-    });
-  } catch(e) {
-    console.warn('AudioContext play failed, using Audio fallback:', e);
-    playAudioFallback(base64, onended);
-  }
-}
-
 document.addEventListener('click', unlockAudio);
 document.addEventListener('touchstart', unlockAudio);
 
-async function sarvamTTS(text, pace = 1.0, onended = null) {
+async function elevenLabsTTS(text, pace = 1.0, onended = null) {
   unlockAudio();
   const cacheKey = text + '|' + pace;
   if (ttsCache.has(cacheKey)) {
-    lastTtsBase64 = ttsCache.get(cacheKey);
-    playTtsViaContext(lastTtsBase64, onended);
+    lastTtsUrl = ttsCache.get(cacheKey);
+    playAudioUrl(lastTtsUrl, onended);
     return;
   }
   try {
-    const res = await fetch(SARVAM_TTS_URL, {
+    const res = await fetch(EL_TTS_URL, {
       method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
+      headers: { 'xi-api-key': EL_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        inputs: [text],
-        target_language_code: 'en-IN',
-        speaker: SARVAM_SPEAKER,
-        model: 'bulbul:v2',
-        pace: pace
+        text,
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: pace }
       })
     });
-    const data = await res.json();
-    if (data.audios && data.audios[0]) {
-      lastTtsBase64 = data.audios[0];
-      ttsCache.set(cacheKey, lastTtsBase64);
-      playTtsViaContext(lastTtsBase64, onended);
-    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    ttsCache.set(cacheKey, url);
+    lastTtsUrl = url;
+    playAudioUrl(url, onended);
   } catch (e) {
-    console.warn('Sarvam TTS failed, falling back to browser TTS:', e);
+    console.warn('ElevenLabs TTS failed, falling back to browser TTS:', e);
     browserSpeak(text, pace < 0.8 ? 0.65 : 0.85);
     if (onended) setTimeout(onended, 3000);
   }
@@ -579,10 +544,10 @@ function browserSpeak(text, rate = 0.85) {
 
 function speak(text, rate = 0.85) {
   const pace = rate < 0.8 ? 0.7 : 1.0;
-  sarvamTTS(text, pace);
+  elevenLabsTTS(text, pace);
 }
 
-function speakSlow(text) { sarvamTTS(text, 0.7); }
+function speakSlow(text) { elevenLabsTTS(text, 0.7); }
 
 function iconBtn(icon, type='primary', onclick='') {
   return `<button class="icon-btn icon-btn-${type}" ${onclick ? `onclick="${onclick}"` : ''}>${ICONS[icon]}</button>`;
@@ -1135,12 +1100,12 @@ function preCacheCallAudio() {
   callRounds.forEach(round => {
     const cacheKey = round.speakText + '|1';
     if (ttsCache.has(cacheKey)) return;
-    fetch(SARVAM_TTS_URL, {
+    fetch(EL_TTS_URL, {
       method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inputs: [round.speakText], target_language_code: 'en-IN', speaker: SARVAM_SPEAKER, model: 'bulbul:v2', pace: 1.0 })
-    }).then(r => r.json()).then(data => {
-      if (data.audios?.[0]) ttsCache.set(cacheKey, data.audios[0]);
+      headers: { 'xi-api-key': EL_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: round.speakText, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1.0 } })
+    }).then(r => r.blob()).then(blob => {
+      ttsCache.set(cacheKey, URL.createObjectURL(blob));
     }).catch(() => {});
   });
 }
@@ -1193,7 +1158,7 @@ function renderCallStep(step) {
   }, 180);
 
   // Auto-speak Sarah's text; on end → turn mic white (active)
-  sarvamTTS(round.speakText, 1.0, () => {
+  elevenLabsTTS(round.speakText, 1.0, () => {
     if (!isFinal) {
       const mic = document.getElementById('callMicBtn');
       if (mic) mic.classList.add('mic-active');
@@ -1389,6 +1354,7 @@ goToState('welcome');
 // ========== VOICE PIPELINE: STT → Anthropic → TTS ==========
 const CHAT_PROXY = 'https://jbiq-proxy.sunit3-sharma.workers.dev';
 const SARVAM_STT_URL = 'https://api.sarvam.ai/speech-to-text';
+const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks'; // STT only
 
 let voiceChatHistory = [];
 let mediaRecorder = null;
@@ -1437,7 +1403,7 @@ function setVoiceState(state) {
       label.textContent = ''; sub.style.display = 'none';
       micBtn.style.display = 'flex'; micBtn.classList.add('vo-mic--pulse');
       stopBtn.style.display = 'none';
-      if (playBtn) playBtn.style.display = lastTtsBase64 ? 'block' : 'none';
+      if (playBtn) playBtn.style.display = lastTtsUrl ? 'block' : 'none';
       hint.style.display = 'block';
       break;
   }
@@ -1458,7 +1424,7 @@ function closeVoice() {
 
 function voicePlayLastTts() {
   unlockAudio();
-  if (lastTtsBase64) playTtsViaContext(lastTtsBase64);
+  if (lastTtsUrl) playAudioUrl(lastTtsUrl);
 }
 
 function voiceTapMic() {
@@ -1569,23 +1535,21 @@ async function callAnthropic(messages) {
 }
 
 async function speakWithSarvam(text, lang) {
-  const ttsLang = (lang && lang.startsWith('hi')) ? 'hi-IN' : 'en-IN';
   const cleaned = text.replace(/[#*_`>\[\](){}|~]/g, '').replace(/\bhttps?:\/\/\S+/g, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
   const shortText = cleaned.substring(0, 500);
   if (!shortText) return;
   try {
-    const ttsResp = await fetch(SARVAM_TTS_URL, {
+    const ttsResp = await fetch(EL_TTS_URL, {
       method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inputs: [shortText], target_language_code: ttsLang, speaker: 'anushka', model: 'bulbul:v2' })
+      headers: { 'xi-api-key': EL_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: shortText, model_id: 'eleven_turbo_v2_5', voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 1.0 } })
     });
-    const ttsData = await ttsResp.json();
-    if (ttsData.audios && ttsData.audios[0]) {
-      lastTtsBase64 = ttsData.audios[0];
-      const vPlay = document.getElementById('vPlayBtn');
-      if (vPlay) vPlay.style.display = 'block';
-      playTtsViaContext(lastTtsBase64);
-    }
+    const blob = await ttsResp.blob();
+    const url = URL.createObjectURL(blob);
+    lastTtsUrl = url;
+    const vPlay = document.getElementById('vPlayBtn');
+    if (vPlay) vPlay.style.display = 'block';
+    playAudioUrl(url);
   } catch (e) {
     console.error('TTS fetch error:', e);
     browserSpeak(text);
