@@ -1135,20 +1135,44 @@ function startAudioConcept() {
   }, 800);
 }
 
+const PAUSE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>';
+
 function playAudioConcept(btn) {
   const icon = document.getElementById('audioIcon');
+
+  // If already playing, toggle pause/resume
+  if (currentAudio && !currentAudio.ended && currentAudio.src) {
+    if (currentAudio.paused) {
+      currentAudio.play().catch(() => {});
+      if (icon) icon.classList.add('playing');
+      btn.innerHTML = '<span style="display:flex;align-items:center;gap:8px;">' + PAUSE_ICON + ' Pause</span>';
+    } else {
+      currentAudio.pause();
+      if (icon) icon.classList.remove('playing');
+      btn.innerHTML = ICONS.play + ' Resume';
+    }
+    return;
+  }
+
+  // First play — fetch audio
   if (icon) icon.classList.add('playing');
-  btn.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16z"/></svg> Playing...</span>';
+  btn.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16z"/></svg> Loading...</span>';
   btn.style.pointerEvents = 'none';
 
-  speakTTS("Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.", 1.15);
+  const text = "Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.";
 
-  // Reset after ~15 seconds
-  setTimeout(() => {
-    if (icon) icon.classList.remove('playing');
-    btn.innerHTML = ICONS.play + ' Listen Again';
+  speakTTS(text, 1.15).then(() => {
     btn.style.pointerEvents = 'auto';
-  }, 15000);
+    btn.innerHTML = '<span style="display:flex;align-items:center;gap:8px;">' + PAUSE_ICON + ' Pause</span>';
+
+    // When audio ends, reset button
+    if (currentAudio) {
+      currentAudio.addEventListener('ended', () => {
+        if (icon) icon.classList.remove('playing');
+        btn.innerHTML = ICONS.play + ' Listen Again';
+      });
+    }
+  });
 }
 
 // === Init ===
