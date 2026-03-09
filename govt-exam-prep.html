@@ -399,7 +399,6 @@ const ICONS = {
 };
 
 // === ElevenLabs Text-to-Speech Engine ===
-const SARVAM_API_KEY = 'sk_bjco0jfw_u9VUpaliZT6cAoT7EgaRxAks'; // kept for STT
 const EL_API_KEY = 'sk_86a2daf2318ba84afa5190ff9a2c09fcc9e7f9dafea1fe79';
 const EL_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
 const EL_MODEL = 'eleven_flash_v2_5';
@@ -414,7 +413,7 @@ function playTtsUrl(url) {
   audio.play().catch(() => {});
 }
 
-async function sarvamTTS(text, pace = 1.0) {
+async function speakTTS(text, pace = 1.0) {
   const cacheKey = text;
   if (ttsCache.has(cacheKey)) {
     playTtsUrl(ttsCache.get(cacheKey));
@@ -1080,7 +1079,7 @@ function flipFlashcardWidget(index) {
 }
 
 function listenFlashcard(text) {
-  sarvamTTS(text, 1.15);
+  speakTTS(text, 1.15);
 }
 
 function finishFlashcards() {
@@ -1142,7 +1141,7 @@ function playAudioConcept(btn) {
   btn.innerHTML = '<span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16z"/></svg> Playing...</span>';
   btn.style.pointerEvents = 'none';
 
-  sarvamTTS("Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.", 1.15);
+  speakTTS("Fiscal deficit is the difference between the government's total expenditure and its total revenue, excluding borrowings. It indicates how much the government needs to borrow to meet its expenses. A high fiscal deficit can lead to inflation and increased debt burden.", 1.15);
 
   // Reset after ~15 seconds
   setTimeout(() => {
@@ -1219,7 +1218,7 @@ init();
 <script>
 // ========== VOICE PIPELINE: STT → Anthropic → TTS ==========
 const CHAT_PROXY_G = 'https://jbiq-proxy.sunit3-sharma.workers.dev';
-const SARVAM_STT_URL_G = 'https://api.sarvam.ai/speech-to-text';
+const EL_STT_URL = 'https://api.elevenlabs.io/v1/speech-to-text';
 
 let voiceChatHistory = [];
 let mediaRecorderG = null;
@@ -1335,21 +1334,18 @@ function killRecordingG() {
 async function processVoiceG(audioBlob) {
   setVoiceState('processing');
   try {
-    const wavBlob = await convertToWavG(audioBlob);
     const fd = new FormData();
-    fd.append('file', wavBlob, 'audio.wav');
-    fd.append('model', 'saaras:v3');
-    fd.append('language_code', 'unknown');
-    fd.append('mode', 'transcribe');
+    fd.append('file', audioBlob, 'audio.webm');
+    fd.append('model_id', 'scribe_v1');
 
-    const sttResp = await fetch(SARVAM_STT_URL_G, {
+    const sttResp = await fetch(EL_STT_URL, {
       method: 'POST',
-      headers: { 'api-subscription-key': SARVAM_API_KEY },
+      headers: { 'xi-api-key': EL_API_KEY },
       body: fd
     });
     if (!sttResp.ok) throw new Error('Speech recognition failed: ' + sttResp.status);
     const sttData = await sttResp.json();
-    const transcript = (sttData.transcript || '').trim();
+    const transcript = (sttData.text || '').trim();
     const detectedLang = sttData.language_code || 'en';
 
     if (!transcript) {
@@ -1376,7 +1372,7 @@ async function processVoiceG(audioBlob) {
     respEl.style.display = 'block';
     respEl.innerHTML = '<p>' + aiText.replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
 
-    speakWithSarvamG(aiText, detectedLang);
+    speakWithElevenLabs(aiText, detectedLang);
 
   } catch (err) {
     console.error('Voice error:', err);
@@ -1400,7 +1396,7 @@ async function callAnthropicG(messages) {
   return data.content[0].text;
 }
 
-async function speakWithSarvamG(text, lang) {
+async function speakWithElevenLabs(text, lang) {
   const cleaned = text.replace(/[#*_`>\[\](){}|~]/g, '').replace(/\bhttps?:\/\/\S+/g, '').replace(/\n{2,}/g, '. ').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
   const shortText = cleaned.substring(0, 500);
   if (!shortText) return;
